@@ -145,6 +145,13 @@ most.
 
 ---
 
+## Roadmap
+
+Planned work toward v1.0.0 — with the evidence behind each item — is in
+[`docs/BACKLOG.md`](docs/BACKLOG.md). The headline goals are content that
+refreshes itself against upstream Carbon rather than drifting, CI, and better
+skill-trigger recall.
+
 ## License and attribution
 
 This package is licensed Apache-2.0.
