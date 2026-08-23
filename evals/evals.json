@@ -1,0 +1,140 @@
+{
+  "skill_name": "dopod-design",
+  "evals": [
+    {
+      "id": 0,
+      "name": "dashboard-from-scratch",
+      "prompt": "I'm building an internal ops dashboard in React. Need a page with a top nav, a left sidebar, and a 4-across row of metric tiles showing request rate, error rate, p99 latency and uptime, then a table of recent deployments below it. It has to support dark mode. Set up the project styling too.",
+      "expected_output": "Uses @carbon/react with the UI Shell (HeaderContainer/Header/SideNav/Content), Grid+Column with condensed for the tile row, DataTable for deployments, GlobalTheme or Theme for dark mode, spacing/type/theme tokens rather than raw values, and wires the SCSS entry point plus IBM Plex.",
+      "assertions": [
+        {
+          "text": "Imports components from @carbon/react, not carbon-components-react"
+        },
+        {
+          "text": "Uses the UI Shell components rather than a hand-built header/sidebar"
+        },
+        {
+          "text": "Uses Grid and Column with per-breakpoint props for the tile row"
+        },
+        {
+          "text": "Uses DataTable rather than a raw <table>"
+        },
+        {
+          "text": "Contains no raw hex color codes in the styling it writes"
+        },
+        {
+          "text": "Contains no raw px values for padding/margin/gap"
+        },
+        {
+          "text": "Applies type via type-style() or a Carbon type token, not bare font-size"
+        },
+        {
+          "text": "Sets up theming with Theme/GlobalTheme rather than a CSS class alone"
+        },
+        {
+          "text": "Mentions installing sass and loading IBM Plex"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "audit-existing-frontend",
+      "prompt": "we inherited this react app from a contractor and leadership wants it 'on carbon' by q4. can you look at src/ and tell me how far off we actually are, and what to do first? i need something i can put in front of a VP.",
+      "expected_output": "Runs detection commands, scores the six dimensions with evidence, produces the structured gap-analysis report with severities, file:line citations, effort estimates, and a prioritized sequence. Does not start editing code.",
+      "assertions": [
+        {
+          "text": "Measures before changing anything (does not begin editing files)"
+        },
+        {
+          "text": "Scores across the six dimensions (foundation, tokens, components, layout, theming, accessibility)"
+        },
+        {
+          "text": "Cites concrete file paths and line numbers as evidence"
+        },
+        {
+          "text": "Assigns severity levels to findings"
+        },
+        {
+          "text": "Produces a prioritized sequence rather than an unordered list"
+        },
+        {
+          "text": "Puts a short summary before the detail (VP-readable)"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "token-choice",
+      "prompt": "quick one \u2014 I have a settings panel that sits inside a card on our main page. inside the panel there's a form with a few text inputs and a divider between sections. what background/border should each of those be? we support light and dark.",
+      "expected_output": "Card is layer-01, panel wrapped in <Layer> so it resolves to layer-02 (or uses the contextual $layer token), inputs use $field-* not $layer-*, divider uses $border-subtle-*, input outline uses $border-strong-*. Explains that the layer number is nesting depth, not a shade.",
+      "assertions": [
+        {
+          "text": "Recommends $field-* for input backgrounds, not $layer-*"
+        },
+        {
+          "text": "Recommends $border-subtle-* for the divider"
+        },
+        {
+          "text": "Uses <Layer> or the contextual $layer token rather than hand-picking $layer-02"
+        },
+        {
+          "text": "Explains that layer numbers encode nesting depth, not lightness"
+        },
+        {
+          "text": "Names no raw hex values as the answer"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "vue-version-trap",
+      "prompt": "starting a new vue 3 admin tool at work and we're supposed to use carbon since that's the company standard. what do I install and how do I set up theming? want the g100 dark theme.",
+      "expected_output": "Flags that @carbon/vue targets Carbon v10 (not v11) and lacks a g100-equivalent token set matching v11, recommends @carbon/web-components for a new Vue 3 project, and gives the isCustomElement config plus the theme setup.",
+      "assertions": [
+        {
+          "text": "Identifies that @carbon/vue targets Carbon v10, not v11"
+        },
+        {
+          "text": "Recommends @carbon/web-components as the better path for new Vue 3 work"
+        },
+        {
+          "text": "Provides the Vue compilerOptions.isCustomElement config for cds- tags"
+        },
+        {
+          "text": "Shows theming via @carbon/styles theme mixin or custom properties"
+        },
+        {
+          "text": "Does not silently give v11 token names for a v10 library"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "ai-summary-surface",
+      "prompt": "we're adding an AI-generated summary at the top of each incident page. it should look distinct from the rest of the page so people know a model wrote it, and they should be able to see why it said what it said. react + carbon.",
+      "expected_output": "Uses AILabel with real explanatory AILabelContent and AILabelActions, attaches it via the decorator prop on a Tile with hasRoundedCorners, references ai-* tokens, uses AISkeleton while generating, and does not invent a confidence number.",
+      "assertions": [
+        {
+          "text": "Uses AILabel (not the deprecated Slug)"
+        },
+        {
+          "text": "Attaches it with the decorator prop (not the deprecated slug prop)"
+        },
+        {
+          "text": "Puts substantive explanatory content inside AILabelContent"
+        },
+        {
+          "text": "Uses an AI skeleton for the generating state"
+        },
+        {
+          "text": "Does not apply the AI treatment to non-AI parts of the page"
+        }
+      ],
+      "files": []
+    }
+  ]
+}

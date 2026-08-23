@@ -1,0 +1,56 @@
+{
+  "name": "dopod-design",
+  "version": "0.1.0",
+  "description": "IBM Carbon Design System guidance as an installable skill for Claude Code, Cursor, GitHub Copilot, and OpenAI Codex.",
+  "keywords": [
+    "dopod",
+    "carbon",
+    "carbon-design-system",
+    "design-system",
+    "ibm",
+    "skill",
+    "agent-skill",
+    "claude-code",
+    "cursor",
+    "copilot",
+    "codex",
+    "agents-md",
+    "ui",
+    "accessibility",
+    "design-tokens"
+  ],
+  "license": "Apache-2.0",
+  "bin": {
+    "dopod-design": "bin/dopod-design.js"
+  },
+  "main": "lib/cli.js",
+  "files": [
+    "SKILL.md",
+    "references/",
+    "dist/",
+    "bin/",
+    "lib/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node --test test/*.test.js",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/realus99/dopod-design.git"
+  },
+  "bugs": {
+    "url": "https://github.com/realus99/dopod-design/issues"
+  },
+  "homepage": "https://github.com/realus99/dopod-design#readme"
+}

@@ -1,0 +1,189 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const { build, extractSlim, REFERENCES, SLIM_START, SLIM_END } = require('../lib/build.js');
+const { parseFrontmatter } = require('../lib/frontmatter.js');
+const { sha256 } = require('../lib/fsx.js');
+const { tmpDir, PACKAGE_ROOT, exists } = require('./helpers.js');
+
+async function buildIntoTmp() {
+  const distDir = path.join(await tmpDir('build'), 'dist');
+  const manifest = await build({ sourceDir: PACKAGE_ROOT, distDir });
+  return { distDir, manifest };
+}
+
+test('every reference named by the build exists in the repository', async () => {
+  for (const ref of REFERENCES) {
+    assert.ok(
+      await exists(path.join(PACKAGE_ROOT, 'references', ref.file)),
+      `references/${ref.file} is declared by the build but missing on disk`
+    );
+  }
+});
+
+test('the canonical SKILL.md carries the frontmatter every tool depends on', async () => {
+  const raw = await fs.readFile(path.join(PACKAGE_ROOT, 'SKILL.md'), 'utf8');
+  const { data } = parseFrontmatter(raw);
+  assert.equal(data.name, 'dopod-design');
+  assert.ok(data.description && data.description.length > 80, 'description drives skill triggering');
+});
+
+test('the build emits one output per tool for the skill and each reference', async () => {
+  const { distDir } = await buildIntoTmp();
+
+  assert.ok(await exists(path.join(distDir, 'claude-code', 'SKILL.md')));
+  assert.ok(await exists(path.join(distDir, 'cursor', 'dopod-design.mdc')));
+  assert.ok(await exists(path.join(distDir, 'copilot', '.github', 'copilot-instructions.md')));
+  assert.ok(await exists(path.join(distDir, 'codex', 'AGENTS.md')));
+
+  for (const ref of REFERENCES) {
+    assert.ok(await exists(path.join(distDir, 'claude-code', 'references', ref.file)));
+    assert.ok(await exists(path.join(distDir, 'cursor', `dopod-design-${ref.slug}.mdc`)));
+    assert.ok(
+      await exists(path.join(distDir, 'copilot', '.github', 'instructions', `dopod-design-${ref.slug}.instructions.md`))
+    );
+    assert.ok(await exists(path.join(distDir, 'codex', '.dopod-design', 'references', ref.file)));
+  }
+});
+
+test('claude-code receives the canonical skill byte for byte', async () => {
+  const { distDir } = await buildIntoTmp();
+  const canonical = await fs.readFile(path.join(PACKAGE_ROOT, 'SKILL.md'), 'utf8');
+  const emitted = await fs.readFile(path.join(distDir, 'claude-code', 'SKILL.md'), 'utf8');
+  assert.equal(emitted, canonical);
+});
+
+test('cursor rules carry a description, and globbed rules carry globs', async () => {
+  const { distDir } = await buildIntoTmp();
+
+  const main = parseFrontmatter(
+    await fs.readFile(path.join(distDir, 'cursor', 'dopod-design.mdc'), 'utf8')
+  );
+  assert.ok(main.data.description.length > 0);
+  assert.equal(main.data.alwaysApply, 'false');
+
+  for (const ref of REFERENCES) {
+    const { data } = parseFrontmatter(
+      await fs.readFile(path.join(distDir, 'cursor', `dopod-design-${ref.slug}.mdc`), 'utf8')
+    );
+    assert.ok(data.description, `dopod-design-${ref.slug}.mdc needs a description`);
+    if (ref.manual) {
+      assert.equal(data.globs, undefined, 'manual references should not auto-attach');
+    } else {
+      assert.equal(data.globs, ref.globs);
+    }
+  }
+});
+
+test('copilot instruction files declare applyTo except for manual references', async () => {
+  const { distDir } = await buildIntoTmp();
+  for (const ref of REFERENCES) {
+    const file = path.join(distDir, 'copilot', '.github', 'instructions', `dopod-design-${ref.slug}.instructions.md`);
+    const { data } = parseFrontmatter(await fs.readFile(file, 'utf8'));
+    if (ref.manual) assert.equal(data.applyTo, undefined);
+    else assert.equal(data.applyTo, ref.globs);
+  }
+});
+
+test('the always-on files stay far smaller than the full skill', async () => {
+  const { distDir } = await buildIntoTmp();
+  const full = await fs.readFile(path.join(distDir, 'claude-code', 'SKILL.md'), 'utf8');
+  const agents = await fs.readFile(path.join(distDir, 'codex', 'AGENTS.md'), 'utf8');
+  assert.ok(
+    agents.length < full.length,
+    'AGENTS.md is loaded on every turn, so it must be a subset'
+  );
+  assert.match(agents, /Never write a raw color/);
+});
+
+test('reference citations are rewritten to each tool’s actual layout', async () => {
+  const { distDir } = await buildIntoTmp();
+
+  const agents = await fs.readFile(path.join(distDir, 'codex', 'AGENTS.md'), 'utf8');
+  assert.match(agents, /`\.dopod-design\/references\/tokens\.md`/);
+  assert.doesNotMatch(agents, /`references\/tokens\.md`/);
+
+  const copilot = await fs.readFile(
+    path.join(distDir, 'copilot', '.github', 'copilot-instructions.md'),
+    'utf8'
+  );
+  assert.match(copilot, /`\.github\/instructions\/dopod-design-tokens\.instructions\.md`/);
+  assert.doesNotMatch(copilot, /`references\/tokens\.md`/);
+});
+
+test('the manifest hashes match the files actually written', async () => {
+  const { distDir, manifest } = await buildIntoTmp();
+  assert.equal(manifest.package, 'dopod-design');
+  assert.ok(manifest.files.length > 0);
+  for (const entry of manifest.files) {
+    const content = await fs.readFile(path.join(distDir, entry.path));
+    assert.equal(sha256(content), entry.sha256, `${entry.path} hash mismatch`);
+  }
+});
+
+test('the manifest excludes itself and lists files in a stable order', async () => {
+  const { manifest } = await buildIntoTmp();
+  assert.ok(!manifest.files.some((f) => f.path === 'manifest.json'));
+  const paths = manifest.files.map((f) => f.path);
+  assert.deepEqual(paths, [...paths].sort());
+});
+
+test('rebuilding produces identical output', async () => {
+  const first = await buildIntoTmp();
+  const second = await buildIntoTmp();
+  assert.deepEqual(
+    first.manifest.files.map((f) => `${f.path}:${f.sha256}`),
+    second.manifest.files.map((f) => `${f.path}:${f.sha256}`)
+  );
+});
+
+test('the build clears stale files from a previous run', async () => {
+  const distDir = path.join(await tmpDir('build-stale'), 'dist');
+  await fs.mkdir(distDir, { recursive: true });
+  const stale = path.join(distDir, 'leftover.md');
+  await fs.writeFile(stale, 'from an older version');
+  await build({ sourceDir: PACKAGE_ROOT, distDir });
+  assert.equal(await exists(stale), false);
+});
+
+test('extractSlim returns only the marked region', () => {
+  const body = `intro\n${SLIM_START}\nkeep me\n${SLIM_END}\noutro\n`;
+  assert.equal(extractSlim(body), 'keep me');
+});
+
+test('a SKILL.md without slim markers fails the build loudly', () => {
+  assert.throws(
+    () => extractSlim('no markers here'),
+    (err) => err.exitCode === 13 && /slim:start/.test(err.message)
+  );
+});
+
+test('inverted slim markers fail the build', () => {
+  assert.throws(
+    () => extractSlim(`${SLIM_END}\nbody\n${SLIM_START}`),
+    (err) => err.exitCode === 13
+  );
+});
+
+test('a missing reference file fails the build instead of shipping a gap', async () => {
+  const source = await tmpDir('build-missing');
+  await fs.writeFile(
+    path.join(source, 'SKILL.md'),
+    `---\nname: dopod-design\ndescription: test\n---\n${SLIM_START}\nrules\n${SLIM_END}\n`
+  );
+  await assert.rejects(
+    build({ sourceDir: source, distDir: path.join(source, 'dist') }),
+    (err) => err.exitCode === 10 && /Missing canonical reference file/.test(err.message)
+  );
+});
+
+test('frontmatter without a description fails the build', async () => {
+  const source = await tmpDir('build-nodesc');
+  await fs.writeFile(path.join(source, 'SKILL.md'), '---\nname: dopod-design\n---\nbody\n');
+  await assert.rejects(
+    build({ sourceDir: source, distDir: path.join(source, 'dist') }),
+    (err) => err.exitCode === 11
+  );
+});

@@ -1,0 +1,10 @@
+# Generated at build/publish time from SKILL.md + references/
+dist/
+
+node_modules/
+npm-debug.log*
+*.tgz
+.DS_Store
+
+# Lockfile written when this package installs into a project
+.carbon-design.lock.json
