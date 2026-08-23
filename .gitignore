@@ -7,4 +7,8 @@ npm-debug.log*
 .DS_Store
 
 # Lockfile written when this package installs into a project
-.carbon-design.lock.json
+.dopod-design.lock.json
+
+# Local-only operator runbooks. Never pushed — see admin-docs/README.md for why
+# and for how to share them with the team.
+admin-docs/
