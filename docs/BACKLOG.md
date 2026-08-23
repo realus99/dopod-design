@@ -12,6 +12,12 @@ reproducible by someone who is not the author.
 All items are filed as [GitHub issues](https://github.com/realus99/dopod-design/issues),
 tracked under the [v1.0.0 milestone](https://github.com/realus99/dopod-design/milestone/1).
 
+Each issue carries a **Success criteria** section (observable outcomes — how we
+know it worked) and a **Definition of done** checklist (the completeness bar for
+closing it). The shared quality bar applied to every issue lives in
+[`docs/add-acceptance.py`](add-acceptance.py); edit it there and re-run with
+`--apply` to update all issues at once.
+
 Priorities: **P0** blocks 1.0 · **P1** should make 1.0 · **P2** wanted, can slip.
 Effort: **S** ≲half a day · **M** ≲two days · **L** more than that.
 
