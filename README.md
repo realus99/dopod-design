@@ -145,6 +145,14 @@ most.
 
 ---
 
+## Contributing
+
+[`CLAUDE.md`](CLAUDE.md) is the fastest orientation, and
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) explains why the package is built
+the way it is — read it before changing how content is emitted or where it
+lands. Edit only `SKILL.md` and `references/*.md`; everything in `dist/` is
+generated.
+
 ## Roadmap
 
 Planned work toward v1.0.0 — with the evidence behind each item — is in
