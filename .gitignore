@@ -9,6 +9,6 @@ npm-debug.log*
 # Lockfile written when this package installs into a project
 .dopod-design.lock.json
 
-# Local-only operator runbooks. Never pushed — see admin-docs/README.md for why
-# and for how to share them with the team.
+# Operator runbooks now live in the private repo realus99/dopod-design-admin.
+# Kept ignored so a local admin-docs/ can never be committed here by accident.
 admin-docs/
