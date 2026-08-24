@@ -7,6 +7,19 @@ All notable changes to this project are documented here. This project follows
 
 ### Changed
 
+- **`references/audit.md` now rates severity by consequence to the user, not by
+  whether a finding is a Carbon issue.** A head-to-head eval caught the skill
+  filing a production Rollback button that throws `ReferenceError` on click as
+  **Low**, framed "Not a Carbon issue, but worth knowing" — while a no-skill
+  baseline led its report with the same defect. The severity scale was defined
+  in Carbon terms, so a real crash ranked below a missing `<h1>`.
+
+  The report template now has a `## Correctness and accessibility` section
+  ahead of the design-system findings, and the reference names both burying
+  phrasings explicitly. Re-running the eval, the crash bugs are now rated
+  **Critical** in their own section, and the run scores 14/14 against the
+  extended assertions — up from 11/14, and above the baseline's 13/14.
+
 - `versions.json` is now the single source for recommended package versions and
   for which Carbon major each implementation targets. `SKILL.md`'s version block
   is rendered from it by `npm run sync:versions`, and the build fails if the two

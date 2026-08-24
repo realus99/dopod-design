@@ -25,6 +25,22 @@ this in line with our design system", or asks for a migration plan.
 **Do not start editing.** An audit's value is the prioritized picture. Measure
 first, report, then let the user choose what to fix.
 
+**Report what you find, not only what you were asked about.** Reading a codebase
+closely surfaces things that are not design-system issues — a handler calling an
+undefined function, a destructive control unreachable by keyboard, a missing
+entry point, dependencies installed and never imported. Those belong in the
+report as first-class findings, rated on their own consequence.
+
+Two phrasings to avoid, because both bury a real defect:
+
+- *"Not a Carbon issue, but worth knowing"* — if it breaks for a user, it is
+  worth more than knowing.
+- Filing it as **Low** because it falls outside the design-system rubric.
+
+The person commissioning a Carbon audit still owns the product. Telling them
+their Rollback button throws on click is more valuable than anything else you
+will find that day, and they cannot act on what you footnote.
+
 Work through six dimensions:
 
 1. **Foundation** — is Carbon installed at all, which version, is the SCSS entry
@@ -179,7 +195,17 @@ single highest-leverage fix.>
 | Theming | X/5 | <what exists> |
 | Accessibility | X/5 | <failed checklist items> |
 
-## Findings
+## Correctness and accessibility
+<Defects that are not design-system issues but were found on the way. Omit the
+section only if there genuinely are none — say so explicitly.>
+
+### <Severity>: <Finding>
+**Where:** `path/to/file.tsx:42`
+**Why it matters:** <consequence to a user, in plain terms>
+**Fix:** <concrete change>
+**Effort:** S / M / L
+
+## Design system findings
 ### <Severity>: <Finding>
 **Where:** `path/to/file.tsx:42` (+N more)
 **Why it matters:** <user-visible or maintenance consequence>
@@ -194,9 +220,20 @@ single highest-leverage fix.>
 - …
 ```
 
-Severity: **Critical** (broken accessibility, broken theming, deprecated
-packages), **High** (systematic token violations, hand-rolled components with
-a11y implications), **Medium** (inconsistency, grid gaps), **Low** (polish).
+**Rate severity by consequence to the user, never by whether it is a Carbon
+issue.** This is the easiest thing to get wrong: a Carbon-shaped rubric quietly
+ranks a real defect below a cosmetic one because the defect is "off-topic".
+
+| Severity | Means |
+|---|---|
+| **Critical** | Breaks for someone: a crash, a destructive action that silently fails, a control no keyboard can reach, an app that cannot be shipped to an accessibility review |
+| **High** | Systematic and expensive to unpick later — token violations throughout, hand-rolled components with a11y implications, deprecated packages |
+| **Medium** | Inconsistency, grid gaps, drift between screens |
+| **Low** | Polish |
+
+A production Rollback button that throws `ReferenceError` on click is
+**Critical**, not Low, and not "worth knowing". It does not become less broken
+because the audit was commissioned about a design system.
 
 Cite real file paths and line numbers. An audit without locations is an opinion.
 
