@@ -13,6 +13,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { detectEol } = require('../lib/marker-merge.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const SKILL = path.join(ROOT, 'SKILL.md');
@@ -46,9 +47,14 @@ function main() {
   const { packages } = JSON.parse(fs.readFileSync(path.join(ROOT, 'versions.json'), 'utf8'));
   const md = fs.readFileSync(SKILL, 'utf8');
   const found = currentBlock(md);
-  const rendered = renderBlock(packages);
+  // Windows git checks out CRLF, so compare on content and write in the file's
+  // own ending. Comparing raw strings made this fail on Windows alone — the
+  // same line-ending trap as #12, in my own tooling this time.
+  const eol = detectEol(md);
+  const rendered = renderBlock(packages).replace(/\n/g, eol);
+  const same = (a, b) => a.replace(/\r\n/g, '\n') === b.replace(/\r\n/g, '\n');
 
-  if (found.text === rendered) {
+  if (same(found.text, rendered)) {
     console.log(`✓ SKILL.md versions match versions.json (${packages.length} packages tracked)`);
     return;
   }
