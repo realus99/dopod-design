@@ -36,7 +36,7 @@
   ],
   "scripts": {
     "build": "node scripts/build.js",
-    "test": "node --test test/*.test.js",
+    "test": "node scripts/run-tests.js",
     "prepublishOnly": "npm run build && npm test",
     "check:package": "node scripts/check-package.js",
     "ci": "npm run build && npm test && npm run check:package",
