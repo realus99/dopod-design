@@ -48,6 +48,24 @@ test('the build emits one output per tool for the skill and each reference', asy
   }
 });
 
+test('claude-code receives an always-on file alongside the on-demand skill', async () => {
+  const { distDir } = await buildIntoTmp();
+  const agents = await fs.readFile(path.join(distDir, 'claude-code', 'AGENTS.md'), 'utf8');
+  const full = await fs.readFile(path.join(distDir, 'claude-code', 'SKILL.md'), 'utf8');
+
+  assert.match(agents, /Never write a raw color/, 'carries the slim rules');
+  assert.ok(agents.length < full.length, 'always-on payload must stay a subset');
+  // It competes for context on every turn, so keep it short.
+  assert.ok(agents.split('\n').length < 200, 'always-on file should stay under ~200 lines');
+});
+
+test('the always-on file points at the installed skill references', async () => {
+  const { distDir } = await buildIntoTmp();
+  const agents = await fs.readFile(path.join(distDir, 'claude-code', 'AGENTS.md'), 'utf8');
+  assert.match(agents, /`\.claude\/skills\/dopod-design\/references\/tokens\.md`/);
+  assert.doesNotMatch(agents, /`references\/tokens\.md`/, 'citations must be relocated');
+});
+
 test('claude-code receives the canonical skill byte for byte', async () => {
   const { distDir } = await buildIntoTmp();
   const canonical = await fs.readFile(path.join(PACKAGE_ROOT, 'SKILL.md'), 'utf8');

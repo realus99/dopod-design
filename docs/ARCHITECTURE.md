@@ -188,7 +188,10 @@ Break these and something downstream breaks quietly.
 
 - **Never overwrite a file we did not write.** Shared files are merged, never
   replaced.
-- **`uninstall` returns a pre-existing `AGENTS.md` byte-identical.** Tested.
+- **`uninstall` returns a pre-existing `AGENTS.md` byte-identical.** Tested as a
+  round-trip inverse property. One documented exception: a file that did not end
+  in a newline gains one, because `upsertBlock` normalises the separator and
+  `stripBlock` cannot know it was absent.
 - **Writes are atomic** — temp file plus rename. An interrupted run must not
   leave a half-written instruction file that a tool then loads as truth.
 - **The manifest sorts by code unit, not `localeCompare`.** Locale-aware

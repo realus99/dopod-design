@@ -96,6 +96,50 @@ test('installing twice does not duplicate the managed block', async () => {
   assert.match(io.out, /updated dopod-design@/);
 });
 
+test('installing claude-code and codex together writes one AGENTS.md block', async () => {
+  const cwd = await tmpDir('install-agents-dedupe');
+  await installCommand(flags({ cwd, tools: ['claude-code', 'codex'] }), captureIO());
+
+  const agents = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf8');
+  assert.equal((agents.match(/dopod-design:start/g) || []).length, 1,
+    'both tools target AGENTS.md; the block must be written once');
+  assert.equal((agents.match(/dopod-design:end/g) || []).length, 1);
+
+  // And the lockfile must not claim the same file twice, or uninstall would
+  // try to strip an already-stripped block.
+  const lock = await readLock(cwd);
+  const agentsEntries = lock.marker_blocks.filter((b) => b.file === 'AGENTS.md');
+  assert.equal(agentsEntries.length, 1, 'one lockfile entry per target file');
+});
+
+test('claude-code alone still writes the always-on AGENTS.md', async () => {
+  const cwd = await tmpDir('install-claude-only');
+  await installCommand(flags({ cwd, tools: ['claude-code'] }), captureIO());
+
+  assert.ok(await exists(path.join(cwd, 'AGENTS.md')), 'always-on file present');
+  assert.ok(await exists(path.join(cwd, SKILL)), 'skill bundle also present');
+  const agents = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /Never write a raw color/);
+});
+
+test('uninstall returns a pre-existing AGENTS.md byte-identical with both tools', async () => {
+  const cwd = await tmpDir('uninstall-agents-both');
+  const mine = '# Team AGENTS\n\nRun `make lint` before committing.\n';
+  await fs.writeFile(path.join(cwd, 'AGENTS.md'), mine);
+
+  await installCommand(flags({ cwd, tools: ['claude-code', 'codex'] }), captureIO());
+  await uninstallCommand(flags({ cwd, tools: ['claude-code', 'codex'] }), captureIO());
+
+  assert.equal(await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf8'), mine);
+});
+
+test('check stays in sync when both AGENTS.md tools are installed', async () => {
+  const cwd = await tmpDir('check-agents-both');
+  await installCommand(flags({ cwd, tools: ['claude-code', 'codex'] }), captureIO());
+  const io = captureIO();
+  assert.equal(await checkCommand(flags({ cwd, tools: ['claude-code', 'codex'] }), io), 0, io.err);
+});
+
 test('check reports "not installed" with exit code 2 before any install', async () => {
   const cwd = await tmpDir('check-fresh');
   const io = captureIO();
@@ -259,9 +303,9 @@ test('uninstall gives back an AGENTS.md the user had written', async () => {
   await uninstallCommand(flags({ cwd }), captureIO());
 
   const after = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf8');
-  assert.match(after, /Always run the linter\./);
-  assert.ok(!after.includes('Carbon rules'));
-  assert.ok(!after.includes('dopod-design:start'));
+  // Byte-identical, not merely "contains the original text" — the loose form of
+  // this assertion hid a stray trailing newline for the whole of v0.1.0.
+  assert.equal(after, mine);
 });
 
 test('uninstall deletes an AGENTS.md that only ever held our block', async () => {

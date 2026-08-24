@@ -3,6 +3,36 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Claude Code now receives an always-on `AGENTS.md` block** alongside the
+  on-demand skill. A skill is only consulted when the model decides it needs
+  help, so an ordinary-sounding request never reached it — measured, 6 of 40
+  trigger-eval queries failed under *every* description wording tried, all
+  sharing that shape ("add paging to the audit log list", "need a loading state
+  for the metrics panel"). Codex and Copilot already had an always-on file;
+  Claude Code did not.
+
+  Measured on three of those queries with the skill tool explicitly denied:
+  with the always-on layer, all three produced Carbon components and tokens and
+  **zero** raw hex codes. Without it, none used Carbon and each wrote 18–21 raw
+  hex values.
+
+  In a project both Claude Code and Codex target `AGENTS.md`; the block is
+  written once. At user scope Claude Code uses `~/.claude/CLAUDE.md`, which does
+  not collide with Codex's `~/.codex/AGENTS.md`.
+
+### Fixed
+
+- `uninstall` left a stray trailing newline in a pre-existing shared file, so
+  the documented byte-identical guarantee was not actually true. The old test
+  asserted only that the original text was still *present*, which hid it. Now
+  tested as a round-trip inverse property, with the one unavoidable exception
+  documented: a file that did not end in a newline gains one.
+- `stripBlock` also consumed trailing whitespace on the user's final line.
+
 ## [0.1.0] — 2026-08-23
 
 First release.

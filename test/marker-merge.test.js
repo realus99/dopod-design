@@ -36,6 +36,30 @@ test('replaces an existing block in place and leaves surrounding text alone', ()
   assert.equal((second.match(/:start v/g) || []).length, 1);
 });
 
+test('strip is the exact inverse of upsert for newline-terminated content', () => {
+  // The byte-identical guarantee uninstall depends on. Scoped to files ending
+  // in a newline, which is every file git produces — see the next test for the
+  // one documented exception.
+  for (const original of [
+    '# Mine\n',
+    '# Mine\n\nSome rules.\n',
+    '# Mine\n\n\nextra blank lines above\n',
+    'a\nb\nc\n',
+    '  indented and trailing spaces kept   \n',
+  ]) {
+    const merged = upsertBlock(original, { version: '1.0.0', body: BODY });
+    assert.equal(stripBlock(merged), original,
+      `round-trip must be lossless for ${JSON.stringify(original)}`);
+  }
+});
+
+test('a file with no trailing newline gains one — the single documented exception', () => {
+  // upsertBlock normalises the separator, so stripBlock cannot know the newline
+  // was absent. Adding one is POSIX-correct and the least surprising outcome.
+  const merged = upsertBlock('no trailing newline', { version: '1.0.0', body: BODY });
+  assert.equal(stripBlock(merged), 'no trailing newline\n');
+});
+
 test('is idempotent across repeated installs of the same version', () => {
   const once = upsertBlock('# Mine\n', { version: '1.0.0', body: BODY });
   const twice = upsertBlock(once, { version: '1.0.0', body: BODY });

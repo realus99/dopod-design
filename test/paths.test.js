@@ -24,6 +24,31 @@ test('claude-code files land in the skills directory', () => {
   );
 });
 
+test('the claude-code always-on file lands at AGENTS.md in a project', () => {
+  assert.equal(rel(resolveTargetPath(BASE, 'claude-code/AGENTS.md')), 'AGENTS.md');
+});
+
+test('claude-code and codex resolve their always-on file to the same project path', () => {
+  // Both merge into AGENTS.md; install must write the block once, not twice.
+  assert.equal(
+    resolveTargetPath(BASE, 'claude-code/AGENTS.md'),
+    resolveTargetPath(BASE, 'codex/AGENTS.md')
+  );
+});
+
+test('at user scope the two always-on files do not collide', () => {
+  const claude = resolveTargetPath(BASE, 'claude-code/AGENTS.md', { global: true });
+  const codex = resolveTargetPath(BASE, 'codex/AGENTS.md', { global: true });
+  assert.equal(rel(claude), path.join('.claude', 'CLAUDE.md'));
+  assert.equal(rel(codex), path.join('.codex', 'AGENTS.md'));
+  assert.notEqual(claude, codex);
+});
+
+test('the always-on file is treated as shared, the skill bundle is not', () => {
+  assert.equal(isSharedFile('claude-code/AGENTS.md'), true);
+  assert.equal(isSharedFile('claude-code/SKILL.md'), false);
+});
+
 test('cursor rules land in .cursor/rules', () => {
   assert.equal(
     rel(resolveTargetPath(BASE, 'cursor/dopod-design-tokens.mdc')),

@@ -59,10 +59,15 @@ Requires Node 18 or newer. No runtime dependencies.
 
 | Tool | Location |
 |---|---|
-| Claude Code | `.claude/skills/dopod-design/SKILL.md` + `references/` |
+| Claude Code | `.claude/skills/dopod-design/SKILL.md` + `references/`, **plus an always-on `AGENTS.md` block** |
 | Cursor | `.cursor/rules/carbon-*.mdc` (glob-scoped rules) |
 | GitHub Copilot | `.github/copilot-instructions.md` + `.github/instructions/carbon-*.instructions.md` |
 | OpenAI Codex | `AGENTS.md` + `.dopod-design/references/` |
+
+Claude Code gets both layers deliberately. A skill is consulted only when the
+model decides it needs one, so a plain-sounding request — "add paging to the
+audit log list" — never reaches it. The always-on block carries the core rules
+regardless; the skill carries the depth.
 
 Each tool gets the shape it actually loads. Claude Code takes the skill whole and
 reads references on demand. Cursor and Copilot get per-topic files with globs, so
