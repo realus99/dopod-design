@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push to the same branch makes an in-flight run irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test · node ${{ matrix.node }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false          # one bad combination should not hide the others
+      matrix:
+        # engines requires >=18. Windows is added once the marker block stops
+        # forcing LF line endings — see issue #12.
+        os: [ubuntu-latest, macos-latest]
+        node: ['18', '20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # No dependencies to install — the package is zero-dependency and the test
+      # runner is node's own. `npm ci` would fail for want of a lockfile.
+      - name: Confirm the tree really is dependency-free
+        shell: bash
+        run: |
+          deps=$(node -p "Object.keys(require('./package.json').dependencies||{}).length")
+          dev=$(node -p "Object.keys(require('./package.json').devDependencies||{}).length")
+          echo "dependencies=$deps devDependencies=$dev"
+          if [ "$deps" != "0" ] || [ "$dev" != "0" ]; then
+            echo "::error::This package must stay zero-dependency (see docs/ARCHITECTURE.md §8)"
+            exit 1
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Build is reproducible
+        shell: bash
+        run: |
+          # dist/ ships in the tarball, so a nondeterministic build would mean
+          # two publishes of the same source produce different payloads.
+          first=$(node -p "require('./dist/manifest.json').files.map(f=>f.path+':'+f.sha256).join('\n')")
+          npm run build --silent > /dev/null
+          second=$(node -p "require('./dist/manifest.json').files.map(f=>f.path+':'+f.sha256).join('\n')")
+          if [ "$first" != "$second" ]; then
+            echo "::error::Rebuild produced different hashes"
+            diff <(echo "$first") <(echo "$second") || true
+            exit 1
+          fi
+          echo "identical across two builds"
+
+  package:
+    name: package contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build
+        run: npm run build
+
+      # Guards the interaction that no unit test covers: dist/ is gitignored but
+      # must ship, while docs/, evals/ and admin-docs/ must not.
+      - name: Assert tarball contents
+        run: npm run check:package
+
+      # Deliberately not `npm publish --dry-run` — that can contact the
+      # registry and would need auth CI has no reason to hold. Contents are
+      # fully asserted above, and prepublishOnly gates the real publish.
+      - name: Summarise the tarball
+        run: npm pack --dry-run

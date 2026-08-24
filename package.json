@@ -37,7 +37,9 @@
   "scripts": {
     "build": "node scripts/build.js",
     "test": "node --test test/*.test.js",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "check:package": "node scripts/check-package.js",
+    "ci": "npm run build && npm test && npm run check:package"
   },
   "engines": {
     "node": ">=18"
