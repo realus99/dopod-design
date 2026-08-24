@@ -3,6 +3,21 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- `versions.json` is now the single source for recommended package versions and
+  for which Carbon major each implementation targets. `SKILL.md`'s version block
+  is rendered from it by `npm run sync:versions`, and the build fails if the two
+  diverge — previously the numbers lived in prose in several files and had to be
+  updated by hand in each.
+- The drift check verifies each framework port's Carbon major from published
+  metadata rather than trusting the documented value. A dependency on
+  `carbon-components@^10` proves v10; `@carbon/styles` proves v11; for
+  `carbon-components-svelte`, which ships its own CSS, the check asks whether
+  `css/g80.css` is still served — v11 deleted that theme.
+
 ## [0.2.0] — 2026-08-24
 
 ### Added

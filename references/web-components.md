@@ -4,7 +4,7 @@ Carbon v11 as standard custom elements. Use this when the app is not React, when
 you need Carbon inside multiple frameworks at once, or when you want components
 that survive a framework migration.
 
-Current: `@carbon/web-components@^2.61.0`. Built on Lit.
+Version pinned in `SKILL.md`. Built on Lit.
 
 ---
 

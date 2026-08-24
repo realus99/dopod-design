@@ -1,0 +1,84 @@
+{
+  "$comment": [
+    "Single source of truth for the package versions this skill recommends, and",
+    "for which Carbon major each implementation targets.",
+    "",
+    "The SKILL.md 'Package versions to install' block is rendered from this file",
+    "by `npm run sync:versions`, and the build fails if the two disagree.",
+    "`scripts/check-upstream.js` reads this file rather than parsing prose.",
+    "",
+    "carbonMajor is load-bearing: writing v11 token names into a v10 project",
+    "silently resolves to nothing, which is the sharpest thing this skill knows.",
+    "'10-era' means the library ships its own v10-generation CSS rather than",
+    "depending on a Carbon package."
+  ],
+  "packages": [
+    {
+      "name": "@carbon/react",
+      "range": "^1.114.0",
+      "note": "React (includes styles + icons)",
+      "carbonMajor": 11,
+      "check": "version"
+    },
+    {
+      "name": "@carbon/styles",
+      "range": "^1.113.0",
+      "note": "SCSS/tokens only, no components",
+      "carbonMajor": 11,
+      "check": "version"
+    },
+    {
+      "name": "@carbon/icons-react",
+      "range": "^11.86.0",
+      "note": "icons for React",
+      "carbonMajor": 11,
+      "check": "version"
+    },
+    {
+      "name": "@carbon/web-components",
+      "range": "^2.61.0",
+      "note": "framework-agnostic custom elements",
+      "carbonMajor": 11,
+      "check": "version",
+      "majorEvidence": "first-party v11 implementation"
+    },
+    {
+      "name": "@carbon/charts",
+      "range": "^1.27.18",
+      "note": "data visualization (+ @carbon/charts-react)",
+      "carbonMajor": 11,
+      "check": "version"
+    },
+    {
+      "name": "@carbon/colors",
+      "range": "^11.x",
+      "note": "raw palettes, mainly for dataviz",
+      "carbonMajor": 11,
+      "check": "none"
+    },
+    {
+      "name": "carbon-components-angular",
+      "range": "^5.72.2",
+      "note": "Angular (v11-aligned)",
+      "carbonMajor": 11,
+      "check": "version",
+      "majorEvidence": "peerDependencies include @carbon/styles ^1.x"
+    },
+    {
+      "name": "@carbon/vue",
+      "range": "^3.0.31",
+      "note": "Vue 3 — Carbon v10, community maintained",
+      "carbonMajor": 10,
+      "check": "major-only",
+      "majorEvidence": "dependencies include carbon-components ^10"
+    },
+    {
+      "name": "carbon-components-svelte",
+      "range": "^0.111.0",
+      "note": "Svelte — Carbon v10-era styling, community maintained",
+      "carbonMajor": "10-era",
+      "check": "major-only",
+      "majorEvidence": "still ships css/g80.css, a theme v11 deleted"
+    }
+  ]
+}

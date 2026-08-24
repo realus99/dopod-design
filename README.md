@@ -142,12 +142,17 @@ job checks it:
 npm run check:upstream        # 0 = every claim still holds, 1 = drift
 ```
 
-It verifies token names, `@carbon/react` exports, motion durations, and package
-versions against the Carbon repository and npm. When a claim stops being true,
+It verifies token names, `@carbon/react` exports, motion durations, package
+versions, and which Carbon major each framework port targets — against the
+Carbon repository and npm. When a claim stops being true,
 CI opens a single rolling tracking issue.
 
-**To accept a legitimate upstream change**, update the affected file in
-`references/` and re-run until green — the check is the definition of correct,
+Versions and Carbon majors live in `versions.json`; `npm run sync:versions`
+regenerates the block in `SKILL.md` from it, and the build fails if they
+diverge.
+
+**To accept a legitimate upstream change**, update `versions.json` or the
+affected file in `references/` and re-run until green — the check is the definition of correct,
 not a suggestion.
 
 ## Editing the content

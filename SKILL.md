@@ -268,13 +268,13 @@ certainly gotten a11y or theming wrong. Go back to the component.
 Current as of the latest verification against the Carbon repository:
 
 ```
-@carbon/react           ^1.114.0   React (includes styles + icons)
-@carbon/styles          ^1.113.0   SCSS/tokens only, no components
-@carbon/icons-react     ^11.86.0   icons for React
-@carbon/web-components  ^2.61.0    framework-agnostic custom elements
-@carbon/charts          ^1.27.18   data visualization (+ @carbon/charts-react)
-@carbon/colors          ^11.x      raw palettes, mainly for dataviz
-carbon-components-angular ^5.72.2  Angular (v11-aligned)
+@carbon/react              ^1.114.0  React (includes styles + icons)
+@carbon/styles             ^1.113.0  SCSS/tokens only, no components
+@carbon/icons-react        ^11.86.0  icons for React
+@carbon/web-components     ^2.61.0   framework-agnostic custom elements
+@carbon/charts             ^1.27.18  data visualization (+ @carbon/charts-react)
+@carbon/colors             ^11.x     raw palettes, mainly for dataviz
+carbon-components-angular  ^5.72.2   Angular (v11-aligned)
 ```
 
 `@carbon/react` requires `sass ^1.33.0` as a peer and supports React 16.8+

@@ -32,16 +32,18 @@
     "lib/",
     "README.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "versions.json"
   ],
   "scripts": {
-    "build": "node scripts/build.js",
+    "build": "node scripts/sync-versions.js --check && node scripts/build.js",
     "test": "node scripts/run-tests.js",
     "prepublishOnly": "npm run build && npm test",
     "check:package": "node scripts/check-package.js",
     "ci": "npm run build && npm test && npm run check:package && npm run smoke:install",
     "check:upstream": "node scripts/check-upstream.js",
-    "smoke:install": "node scripts/smoke-install.js"
+    "smoke:install": "node scripts/smoke-install.js",
+    "sync:versions": "node scripts/sync-versions.js"
   },
   "engines": {
     "node": ">=18"

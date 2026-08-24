@@ -114,6 +114,60 @@ async function upstreamReact() {
   return { unstable, modules };
 }
 
+/**
+ * Which Carbon major does each implementation actually target?
+ *
+ * This is the sharpest thing the skill knows — writing v11 token names into a
+ * v10 project silently resolves to nothing — and the claim most likely to go
+ * quietly false when a port upgrades. Each is derived from published metadata
+ * rather than trusted.
+ */
+async function upstreamCarbonMajors(packages) {
+  const found = {};
+  await Promise.all(packages.map(async (pkg) => {
+    if (pkg.check === 'none') return;
+    let meta;
+    try {
+      meta = await fetchJson(`${REGISTRY}/${encodeURIComponent(pkg.name)}/latest`);
+    } catch {
+      found[pkg.name] = { major: null, why: 'not resolvable on the registry' };
+      return;
+    }
+    const deps = { ...(meta.dependencies || {}), ...(meta.peerDependencies || {}) };
+
+    // Depending on carbon-components@^10 is definitive: that is the v10 CSS.
+    const legacy = deps['carbon-components'];
+    if (legacy && /\^?1?0[.\d]*/.test(legacy) && /(^|[^\d])10\./.test(legacy.replace('^', ' 1'))) {
+      found[pkg.name] = { major: 10, why: `depends on carbon-components ${legacy}` };
+      return;
+    }
+    if (legacy && legacy.includes('10')) {
+      found[pkg.name] = { major: 10, why: `depends on carbon-components ${legacy}` };
+      return;
+    }
+    // Depending on @carbon/styles v1.x means the v11 token set.
+    if (deps['@carbon/styles']) {
+      found[pkg.name] = { major: 11, why: `depends on @carbon/styles ${deps['@carbon/styles']}` };
+      return;
+    }
+    // First-party v11 packages carry no Carbon dependency of their own.
+    if (pkg.name.startsWith('@carbon/')) {
+      found[pkg.name] = { major: 11, why: 'first-party @carbon package' };
+      return;
+    }
+    // Svelte ships its own CSS. g80 was deleted in v11, so still serving it is
+    // proof the styling generation has not moved.
+    const g80 = await fetch(`https://unpkg.com/${pkg.name}/css/g80.css`,
+      { method: 'HEAD', signal: AbortSignal.timeout(TIMEOUT_MS) }).catch(() => null);
+    if (g80 && g80.ok) {
+      found[pkg.name] = { major: '10-era', why: 'still ships css/g80.css, a theme v11 deleted' };
+      return;
+    }
+    found[pkg.name] = { major: null, why: 'no Carbon dependency and no g80 theme — inconclusive' };
+  }));
+  return found;
+}
+
 async function upstreamVersions(names) {
   const out = {};
   await Promise.all(names.map(async (name) => {
@@ -179,14 +233,18 @@ function claimedUnstable() {
   return new Set([...section.matchAll(/`(unstable_{1,2}[A-Za-z][A-Za-z0-9_]*)`/g)].map((m) => m[1]));
 }
 
+function trackedPackages() {
+  // versions.json is the single source; SKILL.md's block is rendered from it
+  // and the build fails if they diverge, so there is no prose to parse.
+  return JSON.parse(read('versions.json')).packages;
+}
+
 function claimedVersions() {
-  // Deliberately not fence-parsing: the closing ``` of an earlier ```scss block
-  // reads as an opening fence and mis-pairs everything after it. Version lines
-  // have a distinctive enough shape to find directly.
   const out = {};
-  for (const line of read('SKILL.md').split('\n')) {
-    const m = /^(@?[\w][\w/-]*)\s+\^(\d+\.\d+\.\d+)\s/.exec(line.trim());
-    if (m && (m[1].startsWith('@carbon/') || m[1].startsWith('carbon-'))) out[m[1]] = m[2];
+  for (const pkg of trackedPackages()) {
+    if (pkg.check !== 'version') continue;
+    const m = /^\^?(\d+\.\d+\.\d+)$/.exec(pkg.range);
+    if (m) out[pkg.name] = m[1];
   }
   return out;
 }
@@ -250,7 +308,24 @@ async function main() {
     }
   }
 
-  // 5. numeric motion values
+  // 5. which Carbon major each implementation targets
+  const packages = trackedPackages();
+  const majors = await upstreamCarbonMajors(packages);
+  for (const pkg of packages) {
+    const actual = majors[pkg.name];
+    if (!actual) continue;
+    if (actual.major === null) {
+      gaps.push({ surface: 'port', detail: `${pkg.name}: could not determine Carbon major — ${actual.why}` });
+    } else if (String(actual.major) !== String(pkg.carbonMajor)) {
+      errors.push({
+        surface: 'port',
+        claim: pkg.name,
+        detail: `documented Carbon v${pkg.carbonMajor}, upstream looks like v${actual.major} (${actual.why})`,
+      });
+    }
+  }
+
+  // 6. numeric motion values
   for (const [key, ms] of Object.entries(claimedDurations())) {
     if (durations[key] !== ms) {
       errors.push({ surface: 'motion', claim: `duration-${key}`, detail: `documented ${ms}ms, upstream ${durations[key]}ms` });
@@ -260,7 +335,7 @@ async function main() {
   if (json) {
     console.log(JSON.stringify({ ok: errors.length === 0, errors, gaps }, null, 2));
   } else {
-    const checked = `${ourTokens.size} tokens · ${ourComponents.size - unverifiable} components · ${names.length} versions`;
+    const checked = `${ourTokens.size} tokens · ${ourComponents.size - unverifiable} components · ${names.length} versions · ${Object.keys(majors).length} ports`;
     if (errors.length) {
       console.error(`✗ upstream drift — ${errors.length} claim(s) no longer true\n`);
       for (const e of errors) console.error(`   [${e.surface}] ${e.claim} — ${e.detail}`);

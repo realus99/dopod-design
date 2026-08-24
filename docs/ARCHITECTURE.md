@@ -208,8 +208,22 @@ The direction matters. A claim we make that upstream no longer has is an
 **error** — we would be teaching a token that resolves to nothing. Something
 upstream has that we do not mention is a **gap**: reported, never fatal.
 
-Four surfaces are checked: theme/component/layout/type token names, `@carbon/react`
-exports, motion durations, and published package versions. Component sub-exports
+Five surfaces are checked: theme/component/layout/type token names,
+`@carbon/react` exports, motion durations, published package versions, and
+**which Carbon major each implementation targets**.
+
+That last one is the sharpest thing the skill knows — writing v11 token names
+into a v10 project silently resolves to nothing — and the claim most likely to
+go quietly false. It is derived, never trusted: a dependency on
+`carbon-components@^10` proves v10; a dependency on `@carbon/styles` proves v11;
+`carbon-components-svelte` ships its own CSS, so the check asks whether
+`css/g80.css` is still served — v11 deleted that theme, so serving it proves the
+styling generation has not moved.
+
+`versions.json` is the single source for versions and Carbon majors.
+`SKILL.md`'s block is rendered from it by `npm run sync:versions`, and the build
+fails if the two diverge, so the drift check reads one file instead of parsing
+prose. Component sub-exports
 are resolved from the published `.d.ts` via their `<Name>Props` types, since
 `index.ts` only re-exports modules. A short allowlist in the script covers names
 we mention deliberately that are *not* current exports — `Slug` (documented as

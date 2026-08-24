@@ -4,7 +4,7 @@ Carbon's charting library. Built on D3, themed from Carbon tokens, and — the
 part that matters — it already solves the categorical color problem that most
 hand-rolled charts get wrong.
 
-Current: `@carbon/charts@^1.27.18`, with framework wrappers
+Version pinned in `SKILL.md`; framework wrappers are
 `@carbon/charts-react`, `@carbon/charts-angular`, `@carbon/charts-svelte`, and
 `@carbon/charts-vue`.
 
