@@ -1,0 +1,126 @@
+name: Release
+
+# Pushing a v* tag publishes to npm and creates the GitHub release. Doing it by
+# hand let the tag, the package.json version, and the release page drift apart,
+# and required an interactive npm session.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run every step but do not publish or create a release'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write     # create the GitHub release
+  id-token: write     # npm provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # tag annotations are the release notes
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: https://registry.npmjs.org
+
+      # The guard that matters. A tag that disagrees with package.json would
+      # publish a version nobody asked for, and npm version numbers cannot be
+      # reused even after unpublishing.
+      # Everything below reads GITHUB_REF, which GitHub sets and validates —
+      # never a free-text input.
+      - name: Tag must match package.json
+        id: version
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+          case "$GITHUB_REF" in
+            refs/tags/*)
+              TAG="${GITHUB_REF#refs/tags/}"
+              echo "tag=$TAG"    >> "$GITHUB_OUTPUT"
+              echo "is_tag=true" >> "$GITHUB_OUTPUT"
+              echo "tag $TAG -> ${TAG#v} | package.json -> $PKG_VERSION"
+              if [ "${TAG#v}" != "$PKG_VERSION" ]; then
+                echo "::error::Tag $TAG does not match package.json version $PKG_VERSION"
+                exit 1
+              fi
+              ;;
+            *)
+              # Dispatched from a branch: rehearse the checks, never publish.
+              echo "tag="         >> "$GITHUB_OUTPUT"
+              echo "is_tag=false" >> "$GITHUB_OUTPUT"
+              echo "not a tag ($GITHUB_REF) — checks only, publishing is skipped"
+              ;;
+          esac
+
+      - name: Refuse to republish an existing version
+        if: steps.version.outputs.is_tag == 'true'
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION="${{ steps.version.outputs.version }}"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "::error::$NAME@$VERSION is already published — npm versions cannot be reused"
+            exit 1
+          fi
+          echo "$NAME@$VERSION is unpublished; proceeding"
+
+      # Same gates as CI, re-run here so a tag can never ship something the
+      # branch checks did not cover.
+      - name: Build, test, assert contents
+        run: npm run ci
+
+      - name: Publish to npm
+        if: steps.version.outputs.is_tag == 'true' && github.event.inputs.dry_run != 'true'
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish (dry run)
+        if: steps.version.outputs.is_tag != 'true' || github.event.inputs.dry_run == 'true'
+        run: |
+          npm pack --dry-run
+          echo "dry run — nothing published"
+
+      - name: Create the GitHub release
+        if: steps.version.outputs.is_tag == 'true' && github.event.inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          # The annotated tag message is the release notes — written when the
+          # release was cut, by whoever cut it.
+          git tag -l --format='%(contents)' "$TAG" > notes.md
+          if [ ! -s notes.md ]; then
+            echo "See CHANGELOG.md for what changed in $TAG." > notes.md
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file notes.md
+            echo "updated existing release $TAG"
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file notes.md
+            echo "created release $TAG"
+          fi
+
+      - name: Summary
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DRY: ${{ github.event.inputs.dry_run }}
+        run: |
+          {
+            echo "### Release $TAG"
+            echo
+            if [ "$DRY" = "true" ]; then
+              echo "**Dry run** — all checks ran, nothing was published."
+            else
+              echo "Published \`dopod-design@$VERSION\` with provenance."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
