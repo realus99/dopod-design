@@ -23,7 +23,16 @@ const os = require('node:os');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const IS_WIN = process.platform === 'win32';
+
+// Node refuses to spawn a .cmd shim without shell:true (the CVE-2024-27980
+// hardening), and npm on Windows *is* a .cmd shim. Enabling the shell means
+// arguments get re-parsed, so anything that could contain a space is quoted —
+// temp paths on Windows runners routinely do.
+function runNpm(args, opts = {}) {
+  const quoted = IS_WIN ? args.map((a) => (/[\s"]/.test(a) ? `"${a}"` : a)) : args;
+  return execFileSync(IS_WIN ? 'npm.cmd' : 'npm', quoted, { ...opts, shell: IS_WIN });
+}
 
 let scratch;
 const checks = [];
@@ -69,7 +78,7 @@ const listFiles = (dir) => {
 function main() {
   console.log('packing…');
   const packed = JSON.parse(
-    execFileSync(npm, ['pack', '--json', '--pack-destination', os.tmpdir()],
+    runNpm(['pack', '--json', '--pack-destination', os.tmpdir()],
       { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
   )[0].filename;
   const tarball = path.join(os.tmpdir(), packed);
@@ -88,7 +97,7 @@ function main() {
   const siblingBefore = fs.readFileSync(sibling, 'utf8');
 
   console.log(`installing ${packed} into a scratch project…`);
-  execFileSync(npm, ['install', tarball, '--no-audit', '--no-fund', '--silent'],
+  runNpm(['install', tarball, '--no-audit', '--no-fund', '--silent'],
     { cwd: scratch, stdio: ['ignore', 'ignore', 'inherit'] });
 
   step('bin resolves and --version matches the package', () => {
