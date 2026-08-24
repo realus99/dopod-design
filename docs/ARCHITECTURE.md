@@ -178,7 +178,29 @@ without the suite printing it.
 
 **Zero dependencies, runtime and dev.** Tests use `node --test`. Keep it that
 way — this package writes files into other people's repos, and a small
-dependency surface is part of why that is acceptable.
+dependency surface is part of why that is acceptable. CI asserts it: a build
+fails if `dependencies` or `devDependencies` is non-empty.
+
+---
+
+## 10. CI
+
+`.github/workflows/ci.yml` runs on push and PR to `main`.
+
+- **test matrix** — Node 18/20/22 on ubuntu and macos. Windows waits on
+  [#12](https://github.com/realus99/dopod-design/issues/12), since the marker
+  block still forces LF.
+- **reproducible build** — builds twice and compares manifest hashes. `dist/`
+  ships in the tarball, so a nondeterministic build would mean two publishes of
+  one source produce different payloads.
+- **package contents** — `npm run check:package` asserts what actually ships.
+  The `files` array and `.gitignore` interact in a way no unit test covers:
+  `dist/` is gitignored but must ship, while `docs/`, `evals/`, and
+  `admin-docs/` must not. Verified against both failure modes.
+
+`main` requires all seven checks. Admins are exempt (`enforce_admins: false`),
+so a maintainer can still push directly; everyone else goes through a PR. Run
+the whole thing locally with `npm run ci`.
 
 ---
 
