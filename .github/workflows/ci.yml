@@ -89,3 +89,28 @@ jobs:
       # fully asserted above, and prepublishOnly gates the real publish.
       - name: Summarise the tarball
         run: npm pack --dry-run
+
+  smoke:
+    name: install smoke · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      # Runs on every platform: the lifecycle touches path handling and line
+      # endings, which is exactly where behaviour diverges.
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build
+        run: npm run build
+
+      # Unit tests call the command functions directly. This installs the packed
+      # tarball into a scratch project and runs the real CLI, which catches a
+      # different class of problem: a mis-scoped `files` array, a bin that does
+      # not resolve, a lockfile the CLI cannot read back.
+      - name: Install lifecycle against the packed tarball
+        run: npm run smoke:install

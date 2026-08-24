@@ -39,8 +39,9 @@
     "test": "node scripts/run-tests.js",
     "prepublishOnly": "npm run build && npm test",
     "check:package": "node scripts/check-package.js",
-    "ci": "npm run build && npm test && npm run check:package",
-    "check:upstream": "node scripts/check-upstream.js"
+    "ci": "npm run build && npm test && npm run check:package && npm run smoke:install",
+    "check:upstream": "node scripts/check-upstream.js",
+    "smoke:install": "node scripts/smoke-install.js"
   },
   "engines": {
     "node": ">=18"
