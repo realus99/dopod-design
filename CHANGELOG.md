@@ -32,12 +32,14 @@ First release.
   system", "the company standard", a repo that already depends on Carbon),
   because the common failure is a plain-sounding UI request in a Carbon
   codebase never reaching the skill at all.
-- Measured 16/20 with zero false positives. The same description measured 18/20
-  when the package was named `carbon-design`; the name itself was carrying
-  triggering signal, and an opaque name costs ~2 queries of recall that
-  rewording does not recover. Precision is unaffected — no negative query
-  (carbon emissions, carbon fibre, MUI, Tailwind, shadcn, Db2, Vuetify,
-  Storybook, Figma tokens) ever triggers it.
+- Measured **31/40 correct, recall 13/20, precision 13/15** on a 40-query
+  trigger set, with competing skills isolated during measurement.
+- Five iterations of automated optimization produced nothing better than this
+  wording. The residual misses share one shape: an ordinary UI task phrased with
+  no design-system vocabulary at all ("add paging to the audit log list",
+  "need a loading state for the metrics panel"). Those read as plain React work
+  the model can handle unaided, so no description reliably pulls the skill in.
+  Closing that gap needs an always-on instruction layer, not better wording.
 
 ### Notes
 
