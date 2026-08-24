@@ -104,9 +104,11 @@ a recovery hint rather than guessing. Guessing here means destroying someone's
 file would report drift every time the user edits their own part of `AGENTS.md`,
 which is both expected and none of our business.
 
-**Known limitation:** the block is written LF-only regardless of the surrounding
-file, so a CRLF host produces a mixed-ending diff on Windows. Tracked as
-[#12](https://github.com/realus99/dopod-design/issues/12).
+The block adopts the **host file's dominant line ending**, so a CRLF `AGENTS.md`
+does not gain bare LF lines. One stray CRLF in an otherwise LF file does not flip
+the block — it is a majority test, not a first-match. Block hashes are compared
+with endings normalised, because the same content written LF or CRLF *is* the
+same content and `check` must not call that drift.
 
 ---
 

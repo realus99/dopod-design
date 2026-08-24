@@ -22,9 +22,9 @@ jobs:
     strategy:
       fail-fast: false          # one bad combination should not hide the others
       matrix:
-        # engines requires >=18. Windows is added once the marker block stops
-        # forcing LF line endings — see issue #12.
-        os: [ubuntu-latest, macos-latest]
+        # engines requires >=18. Windows matters because the marker block has to
+        # adopt a CRLF host file's line endings (#12).
+        os: [ubuntu-latest, macos-latest, windows-latest]
         node: ['18', '20', '22']
     steps:
       - uses: actions/checkout@v4

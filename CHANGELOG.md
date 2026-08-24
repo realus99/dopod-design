@@ -32,6 +32,11 @@ All notable changes to this project are documented here. This project follows
   tested as a round-trip inverse property, with the one unavoidable exception
   documented: a file that did not end in a newline gains one.
 - `stripBlock` also consumed trailing whitespace on the user's final line.
+- **Marker blocks now adopt the host file's line endings.** Writing LF into a
+  CRLF `AGENTS.md` gave Windows users a mixed-ending diff on every install, and
+  made `check` report drift that was purely cosmetic. Block hashes are now
+  compared with line endings normalised, so identical content hashes identically
+  on every platform. CI runs the suite on Windows.
 
 ## [0.1.0] — 2026-08-23
 
@@ -83,8 +88,6 @@ First release.
 
 ### Known limitations
 
-- Marker blocks are written with LF line endings regardless of the surrounding
-  file. Windows CRLF files will show a mixed-ending diff.
 - Copilot has no user-level instruction location, so `--global` skips it.
 - The frontmatter parser handles flat scalars and block scalars only; nested
   YAML in `SKILL.md` frontmatter is not supported.

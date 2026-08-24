@@ -140,6 +140,33 @@ test('check stays in sync when both AGENTS.md tools are installed', async () => 
   assert.equal(await checkCommand(flags({ cwd, tools: ['claude-code', 'codex'] }), io), 0, io.err);
 });
 
+test('a CRLF AGENTS.md survives install and check without line-ending drift', async () => {
+  const cwd = await tmpDir('crlf-install');
+  const mine = '# Team AGENTS\r\n\r\nRun `make lint` before committing.\r\n';
+  await fs.writeFile(path.join(cwd, 'AGENTS.md'), mine);
+
+  await installCommand(flags({ cwd, tools: ['codex'] }), captureIO());
+
+  const merged = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf8');
+  assert.ok(!/(?<!\r)\n/.test(merged),
+    'a CRLF file must not gain bare LF lines — that is the mixed-ending diff');
+
+  // The whole point: check must not see line endings as drift.
+  const io = captureIO();
+  assert.equal(await checkCommand(flags({ cwd, tools: ['codex'] }), io), 0, io.err);
+});
+
+test('a CRLF AGENTS.md comes back byte-identical after uninstall', async () => {
+  const cwd = await tmpDir('crlf-uninstall');
+  const mine = '# Team AGENTS\r\n\r\nRun `make lint` before committing.\r\n';
+  await fs.writeFile(path.join(cwd, 'AGENTS.md'), mine);
+
+  await installCommand(flags({ cwd, tools: ['codex'] }), captureIO());
+  await uninstallCommand(flags({ cwd, tools: ['codex'] }), captureIO());
+
+  assert.equal(await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf8'), mine);
+});
+
 test('check reports "not installed" with exit code 2 before any install', async () => {
   const cwd = await tmpDir('check-fresh');
   const io = captureIO();

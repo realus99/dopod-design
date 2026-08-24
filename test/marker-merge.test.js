@@ -6,6 +6,8 @@ const {
   stripBlock,
   findBlock,
   makeStartMarker,
+  detectEol,
+  normalizeForHash,
   END_MARKER,
 } = require('../lib/marker-merge.js');
 
@@ -124,5 +126,61 @@ test('reports markers that appear in the wrong order', () => {
   assert.throws(
     () => findBlock(`${END_MARKER}\nbody\n${makeStartMarker('1.0.0')}\n`),
     (err) => err.exitCode === 40
+  );
+});
+
+
+// ── line endings ───────────────────────────────────────────────────────────
+// Writing LF into a CRLF file gave Windows users a mixed-ending diff on every
+// install, and made `check` report drift that was purely cosmetic.
+
+test('detects the dominant line ending', () => {
+  assert.equal(detectEol('a\nb\nc\n'), '\n');
+  assert.equal(detectEol('a\r\nb\r\nc\r\n'), '\r\n');
+  assert.equal(detectEol(''), '\n', 'an empty file defaults to LF');
+  // A stray CRLF in an otherwise LF file must not flip the whole block.
+  assert.equal(detectEol('a\nb\nc\r\nd\ne\n'), '\n');
+  assert.equal(detectEol('a\r\nb\r\nc\nd\r\n'), '\r\n');
+});
+
+test('the block adopts the host file CRLF endings', () => {
+  const merged = upsertBlock('# Mine\r\n\r\nOur rules.\r\n', {
+    version: '1.0.0',
+    body: 'line one\nline two',
+  });
+  assert.ok(!/(?<!\r)\n/.test(merged), 'no bare LF may survive in a CRLF file');
+  assert.ok(merged.includes('line one\r\nline two'), 'body converted to CRLF');
+});
+
+test('the block stays LF in an LF file', () => {
+  const merged = upsertBlock('# Mine\n', { version: '1.0.0', body: 'a\r\nb' });
+  assert.ok(!merged.includes('\r'), 'CRLF body converted down to LF');
+});
+
+test('CRLF content round-trips byte-identical', () => {
+  for (const original of [
+    '# Team AGENTS\r\n\r\nRun make lint.\r\n',
+    '# Mine\r\n',
+    'a\r\nb\r\nc\r\n',
+  ]) {
+    const merged = upsertBlock(original, { version: '1.0.0', body: BODY });
+    assert.equal(stripBlock(merged), original,
+      `CRLF round-trip must be lossless for ${JSON.stringify(original)}`);
+  }
+});
+
+test('an existing CRLF block is replaced without introducing LF', () => {
+  const first = upsertBlock('# Mine\r\n', { version: '1.0.0', body: 'old' });
+  const second = upsertBlock(first, { version: '2.0.0', body: 'new' });
+  assert.ok(!/(?<!\r)\n/.test(second));
+  assert.ok(second.includes('new') && !second.includes('old'));
+  assert.equal(findBlock(second).version, '2.0.0');
+});
+
+test('the same content hashes identically whether LF or CRLF', () => {
+  // This is what stops `check` reporting drift on Windows alone.
+  assert.equal(
+    normalizeForHash('one\r\ntwo\r\n'),
+    normalizeForHash('one\ntwo\n')
   );
 });
