@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] — 2026-08-24
 
 ### Added
 
@@ -23,6 +23,24 @@ All notable changes to this project are documented here. This project follows
   In a project both Claude Code and Codex target `AGENTS.md`; the block is
   written once. At user scope Claude Code uses `~/.claude/CLAUDE.md`, which does
   not collide with Codex's `~/.codex/AGENTS.md`.
+
+  Upgrading from 0.1.0 adds the file cleanly — `update` merges it into an
+  existing `AGENTS.md` and `uninstall` still returns that file byte-identical.
+
+- **`npm run check:upstream`** — detects when this package's claims about Carbon
+  stop being true. Compares token names, `@carbon/react` exports, motion
+  durations, and published versions against the Carbon repository and npm. A
+  claim we make that upstream no longer has is an error; something upstream has
+  that we omit is a reported gap. Runs weekly in CI, opening one rolling
+  tracking issue rather than a new one each week.
+
+- **`npm run check:package`** — asserts what the published tarball contains.
+  `dist/` is gitignored but must ship, while `docs/`, `evals/`, and
+  `admin-docs/` must not; no unit test covered that interaction.
+
+- **CI** on Node 18/20/22 across Linux, macOS, and Windows, including a
+  reproducible-build check — `dist/` ships in the tarball, so a nondeterministic
+  build would mean two publishes of one source producing different payloads.
 
 ### Fixed
 
