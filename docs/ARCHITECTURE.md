@@ -198,7 +198,26 @@ fails if `dependencies` or `devDependencies` is non-empty.
   `dist/` is gitignored but must ship, while `docs/`, `evals/`, and
   `admin-docs/` must not. Verified against both failure modes.
 
-`main` requires all seven checks. Admins are exempt (`enforce_admins: false`),
+A second workflow, `upstream-drift.yml`, runs weekly (`npm run check:upstream`).
+It compares what `references/` claims against the Carbon repository and npm, and
+fails when a claim stops being true.
+
+The direction matters. A claim we make that upstream no longer has is an
+**error** — we would be teaching a token that resolves to nothing. Something
+upstream has that we do not mention is a **gap**: reported, never fatal.
+
+Four surfaces are checked: theme/component/layout/type token names, `@carbon/react`
+exports, motion durations, and published package versions. Component sub-exports
+are resolved from the published `.d.ts` via their `<Name>Props` types, since
+`index.ts` only re-exports modules. A short allowlist in the script covers names
+we mention deliberately that are *not* current exports — `Slug` (documented as
+AILabel's former name), `Tearsheet` (documented as living in `@carbon/ibm-products`)
+— each with a reason, so removing the reason makes the check flag it again.
+
+On drift the scheduled run opens **one** rolling tracking issue and comments on
+it thereafter, rather than filing a new issue every Monday.
+
+`main` requires all seven CI checks. Admins are exempt (`enforce_admins: false`),
 so a maintainer can still push directly; everyone else goes through a PR. Run
 the whole thing locally with `npm run ci`.
 

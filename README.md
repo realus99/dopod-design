@@ -133,6 +133,23 @@ The skill routes to ten reference files, loaded only when a task needs them:
 
 ---
 
+## Keeping it accurate
+
+Carbon ships minors weekly, so the guidance here can go stale silently. A weekly
+job checks it:
+
+```bash
+npm run check:upstream        # 0 = every claim still holds, 1 = drift
+```
+
+It verifies token names, `@carbon/react` exports, motion durations, and package
+versions against the Carbon repository and npm. When a claim stops being true,
+CI opens a single rolling tracking issue.
+
+**To accept a legitimate upstream change**, update the affected file in
+`references/` and re-run until green — the check is the definition of correct,
+not a suggestion.
+
 ## Editing the content
 
 One canonical source fans out to all four tools. Edit `SKILL.md` and
