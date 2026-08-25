@@ -3,6 +3,28 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **README: "If it doesn't seem to fire".** The commonest report is that the
+  skill is installed and the agent built something anyway. Usually it did load
+  and you cannot tell, because a skill leaves no visible trace.
+
+  The section names the observed case — [superpowers](https://github.com/obra/superpowers)'
+  `brainstorming` claiming an *"I need to build an internal ops console"* prompt
+  before this skill ever loaded, which is its documented *process skills come
+  first* rule working as designed — and gives three things that reliably work
+  instead. It also covers what happens when a second design-system skill is
+  installed, and explains what the always-on `AGENTS.md` block is for.
+
+### Fixed
+
+- The README claimed **ten** reference files while listing twelve, and omitted
+  `ibm-products.md` from the table. A test now fails the build if the table
+  misses a registered reference or the stated count is wrong — prose counts go
+  stale the moment a reference is added, and nothing was complaining.
+
 ## [1.0.0] — 2026-08-25
 
 **1.0.0 is a stability commitment, not a feature release.** Install paths and

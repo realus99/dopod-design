@@ -48,6 +48,26 @@ test('the build emits one output per tool for the skill and each reference', asy
   }
 });
 
+test('README lists every reference, and its stated count is right', async () => {
+  // The README said "ten reference files" while listing twelve, and omitted
+  // ibm-products entirely. Prose counts drift the moment a reference is added
+  // and nothing complains, so let something complain.
+  const readme = await fs.readFile(path.join(PACKAGE_ROOT, 'README.md'), 'utf8');
+
+  for (const ref of REFERENCES) {
+    assert.ok(readme.includes(`\`${ref.file}\``),
+      `README does not list references/${ref.file}`);
+  }
+
+  const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
+    'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen',
+    'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+  const claimed = readme.match(/routes to ([a-z]+) reference files/);
+  assert.ok(claimed, 'README should state how many references there are');
+  assert.strictEqual(WORDS.indexOf(claimed[1]), REFERENCES.length,
+    `README claims "${claimed[1]}" reference files but there are ${REFERENCES.length}`);
+});
+
 test('the ibm-products reference is registered and glob-scoped', () => {
   const ref = REFERENCES.find((r) => r.slug === 'ibm-products');
   assert.ok(ref, 'ibm-products reference is registered');

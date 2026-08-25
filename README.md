@@ -115,9 +115,52 @@ Flags: `--tools=<list>`, `--global`, `--dry-run`, `--verbose`, `--help`,
 
 ---
 
+## If it doesn't seem to fire
+
+The commonest report is that the skill is installed and the agent built
+something anyway, without Carbon. Usually it did load and you cannot tell,
+because a skill leaves no visible trace. Two things are worth checking.
+
+**Another skill got there first.** Observed with
+[superpowers](https://github.com/obra/superpowers): the prompt *"I need to build
+an internal ops console for our SRE team"* invoked `superpowers:brainstorming`
+and this skill never loaded at all. That is superpowers' documented
+*process skills come first* priority working exactly as designed — brainstorming
+claims "let's build X" prompts before implementation skills get a look.
+
+Nothing in this package can override another skill's priority rules, and it
+should not try. What helps:
+
+- **Name the system.** "Build it with Carbon" reliably pulls the skill in. So
+  does a repo that already depends on `@carbon/react` — stack detection runs
+  from `package.json`.
+- **Invoke it directly** — `/dopod-design`, or ask for it by name.
+- **Let the process skill finish.** Brainstorming ends by writing a plan; the
+  skill loads normally on the implementation turn that follows.
+
+**Claude Code and Codex have a fallback for this.** Both get an always-on block
+in `AGENTS.md` alongside the skill, carrying the rules that matter most — theme
+tokens over raw hex, the spacing scale, component APIs. It is deliberately short
+and always in context, so even a turn where no skill loads gets the rules that
+prevent Carbon-flavored output. Cursor, Copilot, Windsurf, Gemini and Cline get
+their own equivalent through their native always-on file.
+
+That fallback is not a full substitute for the references, and it is the reason
+it exists: measured against prompts where the skill reliably failed to trigger,
+adding it took 0/3 to 3/3 producing Carbon with zero raw hex.
+
+**Another design-system skill is installed.** If you have a second skill that
+claims frontend work broadly — many describe themselves as "consult before
+writing any frontend code" — the two compete, and which one wins is not
+predictable from either description. Check what is installed before concluding
+this one is broken. Emitted filenames here are all prefixed `dopod-design-`
+specifically so both can coexist on disk without overwriting each other.
+
+---
+
 ## What's covered
 
-The skill routes to ten reference files, loaded only when a task needs them:
+The skill routes to thirteen reference files, loaded only when a task needs them:
 
 | Reference | Contents |
 |---|---|
@@ -129,6 +172,7 @@ The skill routes to ten reference files, loaded only when a task needs them:
 | `other-frameworks.md` | Angular, Vue, Svelte — and which Carbon version each actually targets |
 | `charts.md` | `@carbon/charts`, chart selection, the ordered categorical palettes |
 | `ai.md` | Carbon for AI: `AILabel`, the `decorator` prop, `ai-*` and `chat-*` tokens |
+| `ibm-products.md` | `@carbon/ibm-products`: Tearsheet, Datagrid, PageHeader, create flows, and the canary flag system |
 | `intake.md` | What to ask before generating UI — stack, theme, density, navigation, charts, icons, overlays |
 | `motion.md` | Carbon's named motion surfaces, plus expand/collapse, nav, overlay and chart animation |
 | `accessibility.md` | WCAG AA requirements, focus, keyboard, labelling, a review checklist |
