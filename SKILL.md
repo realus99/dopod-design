@@ -51,7 +51,9 @@ Load only what the task calls for. Each file is self-contained.
 
 | Task | Reference |
 |---|---|
-| Any color, spacing, type, motion, radius, or size decision | `references/tokens.md` |
+| **Starting any new screen, page, or feature** | `references/intake.md` — ask first |
+| Any color, spacing, type, radius, or size decision | `references/tokens.md` |
+| Animation: disclosure, nav collapse, overlays, chart entrances | `references/motion.md` |
 | Page structure, 2x Grid, breakpoints, layering, UI Shell | `references/layout.md` |
 | Choosing/using a component, its props, sizes, states | `references/components.md` |
 | React setup, SCSS config, theming, forms, DataTable | `references/react.md` |
@@ -200,14 +202,22 @@ icon-only control needs an accessible label. Full checklist:
 
 ### Building new UI
 
-1. Confirm the implementation and Carbon version (Step 1 above).
-2. Read `references/layout.md` and lay the page out on the 2x Grid first —
+1. **Run the intake in `references/intake.md`.** For anything larger than a
+   single component, ask before generating — stack, theme, density, navigation,
+   how the data is displayed, what question a chart answers. Answer what you can
+   from `package.json` and the surrounding code first, then ask only about the
+   gaps, batched into one message with defaults offered. Skip this entirely for
+   a single component or a specific question.
+2. Confirm the implementation and Carbon version (Step 1 above).
+3. Read `references/layout.md` and lay the page out on the 2x Grid first —
    structure before styling. Carbon layouts fail when the grid is retrofitted.
-3. Pick components from `references/components.md`. Prefer an existing component
+4. Pick components from `references/components.md`. Prefer an existing component
    over composition, and composition over custom.
-4. Apply tokens from `references/tokens.md`. If you catch yourself typing a hex
+5. Apply tokens from `references/tokens.md`. If you catch yourself typing a hex
    code or a pixel value, stop and find the token.
-5. Run the accessibility checklist in `references/accessibility.md`.
+6. Add motion only where it explains a change — `references/motion.md`. Every
+   animated pattern needs its `prefers-reduced-motion` form.
+7. Run the accessibility checklist in `references/accessibility.md`.
 
 ### Reviewing or auditing an existing frontend
 
@@ -291,3 +301,11 @@ publicly documented guidance from `carbondesignsystem.com` and the
 official IBM product. "Carbon" and "IBM" are trademarks of IBM. When in doubt
 about a detail, the repository is the source of truth — the documentation site
 occasionally lags it.
+
+**This is a Carbon-derived house system, not Carbon itself.** Almost everything
+here is Carbon as IBM documents it. Where guidance goes beyond what Carbon
+specifies — chiefly the implementation techniques in `references/motion.md`,
+which Carbon leaves undefined — it is labelled **`[house]`** at the point of
+use. Keep that labelling when you add to this skill. A house choice presented
+as Carbon becomes "what Carbon says" to the next reader, and nobody can tell
+afterwards which decisions were deliberate.

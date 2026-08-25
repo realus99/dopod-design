@@ -1,7 +1,8 @@
 # dopod-design
 
 IBM's [Carbon Design System](https://carbondesignsystem.com) as an installable
-skill for AI coding tools. One command writes the same Carbon guidance into
+skill for AI coding tools — plus a thin house layer where Carbon leaves a gap,
+always labelled as such. One command writes the same Carbon guidance into
 Claude Code, Cursor, GitHub Copilot, and OpenAI Codex — each in that tool's own
 native format.
 
@@ -128,6 +129,8 @@ The skill routes to ten reference files, loaded only when a task needs them:
 | `other-frameworks.md` | Angular, Vue, Svelte — and which Carbon version each actually targets |
 | `charts.md` | `@carbon/charts`, chart selection, the ordered categorical palettes |
 | `ai.md` | Carbon for AI: `AILabel`, the `decorator` prop, `ai-*` and `chat-*` tokens |
+| `intake.md` | What to ask before generating UI — stack, theme, density, navigation, charts, icons, overlays |
+| `motion.md` | Carbon's named motion surfaces, plus expand/collapse, nav, overlay and chart animation |
 | `accessibility.md` | WCAG AA requirements, focus, keyboard, labelling, a review checklist |
 | `audit.md` | Scoring an existing frontend against Carbon; v10→v11 and non-Carbon migrations |
 
@@ -190,6 +193,10 @@ skill-trigger recall.
 ## License and attribution
 
 This package is licensed Apache-2.0.
+
+**This is a Carbon-derived house system, not Carbon itself.** Nearly all of it
+is Carbon as IBM documents it; guidance that goes beyond what Carbon specifies —
+chiefly motion implementation — is labelled `[house]` at the point of use.
 
 Carbon is developed by IBM and licensed under Apache-2.0. This is a **community
 project**: it packages publicly documented guidance from

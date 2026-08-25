@@ -3,6 +3,40 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`references/intake.md` — ask before generating UI.** For anything larger
+  than a single component the skill now runs a structured intake: stack, theme,
+  density, navigation, how data is displayed, what question a chart answers,
+  icons, overlays, motion. It answers what it can from `package.json` and the
+  surrounding code first, then asks only about the gaps, batched into one
+  message with defaults offered.
+
+  Measured: a screen-sized ask ("build the deployments page…") produced an
+  intake and **zero** files; "give me a danger button that says Delete" produced
+  the button and no questions.
+
+- **`references/motion.md` — motion and animation.** Documents Carbon's five
+  named motion *surfaces* (`disclosure`, `contextual`, `stretch`, `expand`,
+  `invoke`), which bind a duration to an easing per interaction and were
+  previously undocumented here. On top of that: expand/collapse against an
+  unknown height, side-nav collapse, origin-aware overlay reveals, trendline
+  draw-on and pie sweep for `@carbon/charts` (which exposes only an on/off
+  boolean), and `data-state` transitions.
+
+  Every animated pattern carries its `prefers-reduced-motion` form, including
+  chart animation, which is JS-driven and out of reach of the blanket CSS rule.
+
+### Changed
+
+- **Positioning: this is a Carbon-derived house system, not Carbon itself.**
+  Nearly all of it is Carbon as IBM documents it. Guidance that goes beyond what
+  Carbon specifies — chiefly motion implementation, which Carbon leaves
+  undefined — is labelled `[house]` at the point of use. A house choice
+  presented as Carbon becomes "what Carbon says" to the next reader.
+
 ## [0.2.1] — 2026-08-25
 
 ### Changed

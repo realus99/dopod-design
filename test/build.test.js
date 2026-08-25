@@ -48,6 +48,32 @@ test('the build emits one output per tool for the skill and each reference', asy
   }
 });
 
+test('intake is manual — it must not attach to file types', () => {
+  // Intake happens before code exists. A glob would surface it when the
+  // decisions it asks about have already been made.
+  const intake = REFERENCES.find((r) => r.slug === 'intake');
+  assert.ok(intake, 'intake reference is registered');
+  assert.equal(intake.globs, undefined);
+  assert.equal(intake.manual, true);
+});
+
+test('motion guidance labels which patterns are ours rather than Carbon', async () => {
+  // Presenting a house choice as Carbon makes it "what Carbon says" to the next
+  // reader, and the distinction is unrecoverable afterwards.
+  const motion = await fs.readFile(path.join(PACKAGE_ROOT, 'references/motion.md'), 'utf8');
+  assert.ok((motion.match(/\[house\]/g) || []).length >= 4,
+    'house-layer patterns must be labelled at the point of use');
+  assert.match(motion, /Carbon canon/);
+  assert.match(motion, /prefers-reduced-motion/, 'reduced motion is non-negotiable');
+});
+
+test('every animated pattern reference documents reduced motion', async () => {
+  const motion = await fs.readFile(path.join(PACKAGE_ROOT, 'references/motion.md'), 'utf8');
+  assert.match(motion, /## 9\. Reduced motion/);
+  // Chart animation is JS-driven, so the blanket CSS rule cannot reach it.
+  assert.match(motion, /animations: !reduce/);
+});
+
 test('claude-code receives an always-on file alongside the on-demand skill', async () => {
   const { distDir } = await buildIntoTmp();
   const agents = await fs.readFile(path.join(distDir, 'claude-code', 'AGENTS.md'), 'utf8');
