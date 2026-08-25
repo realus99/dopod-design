@@ -68,6 +68,25 @@ test('README lists every reference, and its stated count is right', async () => 
     `README claims "${claimed[1]}" reference files but there are ${REFERENCES.length}`);
 });
 
+test('the worked example is registered and scoped to component files', () => {
+  const ref = REFERENCES.find((r) => r.slug === 'example');
+  assert.ok(ref, 'example reference is registered');
+  // It is a React build. Attaching it to .scss or .md would put a 15k-char
+  // example in front of tasks it cannot help with.
+  assert.match(ref.globs, /tsx|jsx/);
+  assert.ok(!ref.globs.includes('scss'));
+});
+
+test('the example only uses v11 type token names', async () => {
+  // productive-heading-04 nearly shipped here. The v10 aliases still resolve in
+  // v11, so nothing upstream can catch this — the rename table in tokens.md is
+  // the authority, and it is checked against by hand.
+  const md = await fs.readFile(path.join(PACKAGE_ROOT, 'references/example.md'), 'utf8');
+  const V10 = /type-style\('(productive-heading|expressive-heading|body-short|body-long)-\d+'\)/;
+  assert.doesNotMatch(md, V10,
+    'example.md uses a v10 type token name; see tokens.md §12 for the v11 equivalent');
+});
+
 test('the ibm-products reference is registered and glob-scoped', () => {
   const ref = REFERENCES.find((r) => r.slug === 'ibm-products');
   assert.ok(ref, 'ibm-products reference is registered');

@@ -180,7 +180,7 @@ specifically so both can coexist on disk without overwriting each other.
 
 ## What's covered
 
-The skill routes to thirteen reference files, loaded only when a task needs them:
+The skill routes to fourteen reference files, loaded only when a task needs them:
 
 | Reference | Contents |
 |---|---|
@@ -192,6 +192,7 @@ The skill routes to thirteen reference files, loaded only when a task needs them
 | `other-frameworks.md` | Angular, Vue, Svelte — and which Carbon version each actually targets |
 | `charts.md` | `@carbon/charts`, chart selection, the ordered categorical palettes |
 | `ai.md` | Carbon for AI: `AILabel`, the `decorator` prop, `ai-*` and `chat-*` tokens |
+| `example.md` | A complete annotated build — UI Shell, 2x Grid, metric tiles, `DataTable`, validated form, with the reasoning attached |
 | `ibm-products.md` | `@carbon/ibm-products`: Tearsheet, Datagrid, PageHeader, create flows, and the canary flag system |
 | `intake.md` | What to ask before generating UI — stack, theme, density, navigation, charts, icons, overlays |
 | `motion.md` | Carbon's named motion surfaces, plus expand/collapse, nav, overlay and chart animation |

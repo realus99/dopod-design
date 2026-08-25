@@ -56,6 +56,7 @@ Load only what the task calls for. Each file is self-contained.
 | Animation: disclosure, nav collapse, overlays, chart entrances | `references/motion.md` |
 | Page structure, 2x Grid, breakpoints, layering, UI Shell | `references/layout.md` |
 | Choosing/using a component, its props, sizes, states | `references/components.md` |
+| Building a whole screen and want a worked example to follow | `references/example.md` |
 | Tearsheet, Datagrid, PageHeader, create flows, side panels | `references/ibm-products.md` |
 | React setup, SCSS config, theming, forms, DataTable | `references/react.md` |
 | Web Components (`cds-*`) setup and usage | `references/web-components.md` |

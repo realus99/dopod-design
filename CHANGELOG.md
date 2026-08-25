@@ -7,6 +7,20 @@ All notable changes to this project are documented here. This project follows
 
 ### Added
 
+- **`references/example.md` — one complete build, annotated.** Every other
+  reference explains a piece; this shows the pieces fitting together, which is
+  the part that is hard to infer from fragments. A deployments console: UI
+  Shell, a 2x Grid page, metric tiles, a `DataTable` with sort and search, and
+  a validated form in a modal.
+
+  The annotations carry the value. Why `<Layer>` wraps a tile, why
+  `HeaderContainer` owns the side-nav state, why `invalid`/`invalidText` beats
+  a red border, why `size="sm"` on a scanning table — the reasoning is what
+  transfers to the screen you are actually building.
+
+  It closes with what to keep and what to change when copying, because a worked
+  example that reads as a mandate is worse than none.
+
 - **`--global` now supports Copilot.** VS Code reads user-level instructions
   from `~/.copilot/instructions`, so Copilot is no longer skipped at user
   scope. Re-checked against the VS Code documentation on 2026-08-25; it was
