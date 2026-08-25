@@ -11,7 +11,7 @@ tool's files land, or changing the lockfile's location would break existing
 installs' ability to update or uninstall cleanly, so those are breaking changes
 from here. The content will keep moving; the contract with your repo will not.
 
-What that rests on: 129 tests, CI across Linux/macOS/Windows and Node 20/22/24,
+What that rests on: 129 tests, CI across Linux/macOS/Windows and Node 18/20/22,
 a weekly drift check that verifies every token, component, version and port
 Carbon major against the upstream repository, publishing with SLSA provenance,
 and an uninstall that returns a pre-existing file byte-identical.
