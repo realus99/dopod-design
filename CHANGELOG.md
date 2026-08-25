@@ -3,6 +3,38 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`react.md` was wrong about `@carbon/test-utils`.** It described the package
+  as providing "helpers for a11y assertions and event simulation". It is a
+  **Sass renderer** for unit-testing SCSS, it was last published in **2019 at
+  10.3.0**, and it has no v11 release — so the guidance was sending people to
+  add a seven-year-old v10 package to their test setup. §9 now says what it
+  actually is and what to use instead.
+
+- **`react.md` was wrong about which components portal.** `Menu`, `MenuButton`
+  and `OverflowMenu` render through `createPortal` and sit outside the render
+  container; `Modal`, `ComposedModal` and `Tooltip` do not — they render
+  inline. The file previously named `Modal` and `Tooltip` as portalled, which
+  sends you hunting for a query problem that is not there.
+
+- **The drift check inferred v11 from the `@carbon/` namespace alone**, so any
+  first-party package that never moved to v11 reported as drift forever. It now
+  reads the package's own major first.
+
+### Added
+
+- **`react.md` §9 rewritten** with a runnable snippet per topic: querying by
+  role and accessible name, why `toHaveStyle` on a theme token always fails
+  (jsdom loads no SCSS, so assert the class and `useTheme()` instead), the
+  portal rules above, and the `IdPrefix` snapshot trap. Cross-linked from
+  `accessibility.md` §10, since query-by-role doubles as a11y regression cover.
+
+- `@carbon/test-utils` is now version-tracked, so a v11 release — the one event
+  that would make this guidance wrong again — shows up in the weekly check.
+
 ## [1.2.0] — 2026-08-25
 
 ### Added

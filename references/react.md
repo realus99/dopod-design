@@ -357,19 +357,105 @@ Center it in the column, do not center it in the viewport.
 
 ## 9. Testing
 
-`@carbon/react` components render real DOM, so React Testing Library works
-normally — query by role and accessible name, which is also a free a11y check:
+Carbon components render real DOM, so React Testing Library works normally. The
+Carbon-specific parts are the four below, and two of them fail in ways that look
+like your test is wrong rather than your query.
+
+### Query by role and accessible name
 
 ```js
-screen.getByRole('button', { name: 'Create' });
-screen.getByLabelText('Email address');
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+test('submits the form', async () => {
+  render(<DeployForm />);
+  await userEvent.type(screen.getByLabelText('Service name'), 'api-gateway');
+  await userEvent.click(screen.getByRole('button', { name: 'Deploy' }));
+  expect(screen.getByRole('status')).toHaveTextContent('Deploying');
+});
 ```
 
-`@carbon/test-utils` provides helpers for a11y assertions and event simulation.
+This is worth more than convenience: a query by accessible name **fails when the
+accessible name breaks**, so every test doubles as an a11y regression check for
+free. A `data-testid` passes whether or not the control is reachable. See
+`accessibility.md` §10.
 
-Two gotchas:
+### `@carbon/test-utils` is not what its name suggests
 
-- Components using `useId` produce ids that change between runs. Snapshot tests
-  will be flaky unless you wrap in `<IdPrefix prefix="test">`.
-- Portal-rendered components (`Modal`, `OverflowMenu`, `Tooltip`) mount outside
-  the container. Query from `screen`, not from the render result.
+It is a **Sass renderer** for unit-testing SCSS — Carbon uses it to test its own
+stylesheets. It is not a set of React or a11y helpers.
+
+It is also **`10.3.0`, published in 2019**, and has had no v11 release. Do not
+add it to an app's test setup expecting component utilities. Use React Testing
+Library, `@testing-library/user-event`, and `jest-axe`.
+
+### Themed components: assert the contract, not the colour
+
+`<Theme theme="g100">` sets a class (`cds--g100`) and a context value. It does
+**not** inline any colour — the values come from compiled SCSS, which jsdom
+never loads. So `toHaveStyle({ color: '#f4f4f4' })` will fail in a passing app,
+and chasing it wastes an afternoon.
+
+Assert what is actually observable in jsdom:
+
+```jsx
+import { Theme, useTheme } from '@carbon/react';
+
+function ThemeProbe() {
+  const { theme } = useTheme();
+  return <span data-testid="theme">{theme}</span>;
+}
+
+test('the panel renders under the dark theme', () => {
+  const { container } = render(
+    <Theme theme="g100"><Panel /><ThemeProbe /></Theme>
+  );
+  expect(container.firstChild).toHaveClass('cds--g100');
+  expect(screen.getByTestId('theme')).toHaveTextContent('g100');
+});
+```
+
+For real colour verification you need a browser — Playwright or a visual
+regression tool. Token correctness is not a unit-test question.
+
+### Portal-rendered components
+
+`Menu`, `MenuButton`, and `OverflowMenu` render through `createPortal` into
+`document.body`, so they are **outside** the container `render()` returns:
+
+```js
+const { container } = render(<OverflowMenu aria-label="Actions" />);
+await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+
+within(container).queryByRole('menuitem');   // null — it is not in there
+screen.getByRole('menuitem', { name: 'Delete' });   // correct
+```
+
+**`Modal`, `ComposedModal`, and `Tooltip` do not portal** — they render inline,
+and container-scoped queries find them. The advice to query from `screen`
+regardless is still right, because it works either way and you stop having to
+remember which is which.
+
+### The `IdPrefix` snapshot trap
+
+Carbon generates ids with `useId`. They are stable within a render but differ
+between runs, so snapshots diff on ids that mean nothing:
+
+```diff
+- <input id="text-input-3" aria-describedby="text-input-3-helper">
++ <input id="text-input-7" aria-describedby="text-input-7-helper">
+```
+
+Wrap the tree in `<IdPrefix>` to make them deterministic:
+
+```jsx
+import { IdPrefix } from '@carbon/react';
+
+render(<IdPrefix prefix="test"><DeployForm /></IdPrefix>);
+// ids become test-text-input-1, and stay that way
+```
+
+Prefer role and label queries over snapshots for Carbon components — the markup
+is not your API and it changes between minors. Reach for `IdPrefix` when a
+snapshot is genuinely the right tool, not to make a fragile one pass.
+

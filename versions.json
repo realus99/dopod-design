@@ -99,6 +99,15 @@
       "check": "version",
       "core": false,
       "majorEvidence": "peerDependencies include @carbon/react ^1.111.1"
+    },
+    {
+      "name": "@carbon/test-utils",
+      "range": "^10.3.0",
+      "note": "Sass renderer, NOT React test helpers \u2014 last published 2019, no v11",
+      "carbonMajor": 10,
+      "check": "version",
+      "core": false,
+      "majorEvidence": "own version is 10.x; react.md \u00a79 tells readers not to use it"
     }
   ]
 }

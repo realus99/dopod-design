@@ -68,6 +68,17 @@ test('README lists every reference, and its stated count is right', async () => 
     `README claims "${claimed[1]}" reference files but there are ${REFERENCES.length}`);
 });
 
+test('react.md does not sell @carbon/test-utils as React test helpers', async () => {
+  // It is a Sass renderer, last published 2019 at 10.3.0, with no v11 release.
+  // The file used to describe it as providing "helpers for a11y assertions and
+  // event simulation" — wrong on both counts, and it sent people to add a
+  // seven-year-old v10 package to their test setup.
+  const md = await fs.readFile(path.join(PACKAGE_ROOT, 'references/react.md'), 'utf8');
+  assert.doesNotMatch(md, /helpers for a11y assertions/i);
+  assert.match(md, /Sass renderer/i,
+    'react.md should say what @carbon/test-utils actually is');
+});
+
 test('the worked example is registered and scoped to component files', () => {
   const ref = REFERENCES.find((r) => r.slug === 'example');
   assert.ok(ref, 'example reference is registered');

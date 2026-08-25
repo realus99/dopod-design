@@ -150,8 +150,16 @@ async function upstreamCarbonMajors(packages) {
       found[pkg.name] = { major: 11, why: `depends on @carbon/styles ${deps['@carbon/styles']}` };
       return;
     }
-    // First-party v11 packages carry no Carbon dependency of their own.
+    // First-party v11 packages carry no Carbon dependency of their own — but
+    // only if they actually moved to v11. @carbon/test-utils is still 10.3.0
+    // from 2019, and inferring v11 from the namespace alone reported it as
+    // drift forever. A first-party package's own major settles it.
     if (pkg.name.startsWith('@carbon/')) {
+      const own = /^(\d+)\./.exec(meta.version || '');
+      if (own && Number(own[1]) === 10) {
+        found[pkg.name] = { major: 10, why: `first-party but still ${meta.version}` };
+        return;
+      }
       found[pkg.name] = { major: 11, why: 'first-party @carbon package' };
       return;
     }

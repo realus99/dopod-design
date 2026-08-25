@@ -273,3 +273,8 @@ free regression coverage:
 screen.getByRole('button', { name: 'Delete deployment api-gateway' });
 screen.getByLabelText('Email address');
 ```
+
+`react.md` §9 covers the Carbon-specific testing traps that get in the way of
+doing this — chiefly that `Menu`/`OverflowMenu` portal outside the render
+container, so a container-scoped query returns null and looks like a broken
+component rather than a misplaced query.
