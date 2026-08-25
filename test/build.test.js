@@ -48,6 +48,23 @@ test('the build emits one output per tool for the skill and each reference', asy
   }
 });
 
+test('the ibm-products reference is registered and glob-scoped', () => {
+  const ref = REFERENCES.find((r) => r.slug === 'ibm-products');
+  assert.ok(ref, 'ibm-products reference is registered');
+  assert.ok(ref.globs, 'it should attach to source files, not be manual-only');
+  assert.ok(!ref.globs.includes('scss'), 'it is component guidance, not styling');
+});
+
+test('components.md has no dangling pointer to a missing reference', async () => {
+  // components.md used to say Tearsheet "lives in @carbon/ibm-products" with
+  // nowhere to send the reader.
+  const md = await fs.readFile(path.join(PACKAGE_ROOT, 'references/components.md'), 'utf8');
+  for (const m of md.matchAll(/`references\/([a-z-]+\.md)`/g)) {
+    assert.ok(REFERENCES.some((r) => r.file === m[1]),
+      `components.md points at references/${m[1]}, which is not a registered reference`);
+  }
+});
+
 test('windsurf rules respect the 12,000-character cap', async () => {
   const { distDir } = await buildIntoTmp();
   const dir = path.join(distDir, 'windsurf', 'rules');

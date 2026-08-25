@@ -10,7 +10,9 @@
     "carbonMajor is load-bearing: writing v11 token names into a v10 project",
     "silently resolves to nothing, which is the sharpest thing this skill knows.",
     "'10-era' means the library ships its own v10-generation CSS rather than",
-    "depending on a Carbon package."
+    "depending on a Carbon package.",
+    "",
+    "core:false means version-checked but NOT listed in SKILL.md's install block \u2014 @carbon/ibm-products is a separate layer, not part of a core setup."
   ],
   "packages": [
     {
@@ -18,21 +20,24 @@
       "range": "^1.114.0",
       "note": "React (includes styles + icons)",
       "carbonMajor": 11,
-      "check": "version"
+      "check": "version",
+      "core": true
     },
     {
       "name": "@carbon/styles",
       "range": "^1.113.0",
       "note": "SCSS/tokens only, no components",
       "carbonMajor": 11,
-      "check": "version"
+      "check": "version",
+      "core": true
     },
     {
       "name": "@carbon/icons-react",
       "range": "^11.86.0",
       "note": "icons for React",
       "carbonMajor": 11,
-      "check": "version"
+      "check": "version",
+      "core": true
     },
     {
       "name": "@carbon/web-components",
@@ -40,21 +45,24 @@
       "note": "framework-agnostic custom elements",
       "carbonMajor": 11,
       "check": "version",
-      "majorEvidence": "first-party v11 implementation"
+      "majorEvidence": "first-party v11 implementation",
+      "core": true
     },
     {
       "name": "@carbon/charts",
       "range": "^1.27.18",
       "note": "data visualization (+ @carbon/charts-react)",
       "carbonMajor": 11,
-      "check": "version"
+      "check": "version",
+      "core": true
     },
     {
       "name": "@carbon/colors",
       "range": "^11.x",
       "note": "raw palettes, mainly for dataviz",
       "carbonMajor": 11,
-      "check": "none"
+      "check": "none",
+      "core": true
     },
     {
       "name": "carbon-components-angular",
@@ -62,23 +70,35 @@
       "note": "Angular (v11-aligned)",
       "carbonMajor": 11,
       "check": "version",
-      "majorEvidence": "peerDependencies include @carbon/styles ^1.x"
+      "majorEvidence": "peerDependencies include @carbon/styles ^1.x",
+      "core": true
     },
     {
       "name": "@carbon/vue",
       "range": "^3.0.31",
-      "note": "Vue 3 — Carbon v10, community maintained",
+      "note": "Vue 3 \u2014 Carbon v10, community maintained",
       "carbonMajor": 10,
       "check": "major-only",
-      "majorEvidence": "dependencies include carbon-components ^10"
+      "majorEvidence": "dependencies include carbon-components ^10",
+      "core": false
     },
     {
       "name": "carbon-components-svelte",
       "range": "^0.111.0",
-      "note": "Svelte — Carbon v10-era styling, community maintained",
+      "note": "Svelte \u2014 Carbon v10-era styling, community maintained",
       "carbonMajor": "10-era",
       "check": "major-only",
-      "majorEvidence": "still ships css/g80.css, a theme v11 deleted"
+      "majorEvidence": "still ships css/g80.css, a theme v11 deleted",
+      "core": false
+    },
+    {
+      "name": "@carbon/ibm-products",
+      "range": "^2.97.0",
+      "note": "Carbon for IBM Products \u2014 Tearsheet, Datagrid, create flows",
+      "carbonMajor": 11,
+      "check": "version",
+      "core": false,
+      "majorEvidence": "peerDependencies include @carbon/react ^1.111.1"
     }
   ]
 }

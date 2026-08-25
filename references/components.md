@@ -204,6 +204,8 @@ data-heavy screens.
 
 **Tile vs. Card.** `Tile` is the long-standing general-purpose surface and the
 safe default. `Card` is newer and more opinionated about internal structure.
+`ProductiveCard` and `ExpressiveCard` are a different package again — see
+`references/ibm-products.md`.
 
 ---
 
@@ -265,7 +267,7 @@ tooltip is a keyboard trap.
 | `Dialog` | Lower-level native `<dialog>` wrapper. |
 | `SidePanel` | Side sheet for detail or edit flows without leaving the page. |
 | `Popover` | Anchored floating content. |
-| `Tearsheet` | Not in core Carbon — lives in `@carbon/ibm-products`. |
+| `Tearsheet` | Not in core Carbon — see `references/ibm-products.md`. |
 | `InterstitialScreen` | Full-screen onboarding/intro sequence. |
 | `Coachmark` | Product tour highlight. |
 

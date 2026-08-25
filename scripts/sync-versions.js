@@ -20,10 +20,10 @@ const SKILL = path.join(ROOT, 'SKILL.md');
 const HEADING = '## Package versions to install';
 
 function renderBlock(packages) {
-  // Only the packages a consumer installs for the flagship paths; the v10 ports
-  // are documented in references/other-frameworks.md with their caveats, and
-  // listing them here as "install this" would be actively misleading.
-  const install = packages.filter((p) => p.carbonMajor === 11);
+  // Only the packages a consumer installs for the flagship paths. The v10 ports
+  // carry caveats documented in other-frameworks.md, and @carbon/ibm-products is
+  // a separate layer — listing either here as "install this" would mislead.
+  const install = packages.filter((p) => p.core);
   const width = Math.max(...install.map((p) => p.name.length)) + 2;
   const rangeWidth = Math.max(...install.map((p) => p.range.length)) + 2;
   const lines = install.map(

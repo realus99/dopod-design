@@ -212,6 +212,8 @@ function claimedComponents() {
     ['Delete', 'button label in a Modal example, not a component'],
     ['Slug', 'documented as the former name of AILabel; correctly removed upstream'],
     ['Tearsheet', 'documented as NOT in core Carbon — lives in @carbon/ibm-products'],
+    ['ProductiveCard', 'documented as NOT in core Carbon — lives in @carbon/ibm-products'],
+    ['ExpressiveCard', 'documented as NOT in core Carbon — lives in @carbon/ibm-products'],
     // Real sub-exports the published .d.ts does not name, because it exports no
     // Props type for them. Verified by hand 2026-08-24.
     ['ModalBody', 'ComposedModal sub-export; no Props type in the published .d.ts'],

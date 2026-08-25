@@ -3,6 +3,31 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`references/ibm-products.md`** — Carbon for IBM Products, the layer above
+  core Carbon: `Tearsheet`, `Datagrid`, `PageHeader`, `SidePanel`, create
+  flows, and the `EmptyState`/`HTTPError*` family.
+
+  The operational fact worth having is the **flag system**: of 117 components,
+  **47 are released and 70 sit behind canary flags**. Import a canary component
+  without setting `pkg.component.<Name> = true` at app entry and it declines to
+  render, with a console warning as the only clue. That is the failure this
+  reference exists to prevent.
+
+  `@carbon/ibm-products` is now version-tracked by the weekly drift check, but
+  marked `core: false` in `versions.json` so it stays out of `SKILL.md`'s
+  install block — it is a deliberate extra layer, not part of a Carbon setup.
+
+### Fixed
+
+- `components.md` said `Tearsheet` "lives in `@carbon/ibm-products`" with
+  nowhere to send the reader. Those pointers now resolve, and a test fails the
+  build if any reference link in `components.md` points at a file that is not
+  registered.
+
 ## [0.4.0] — 2026-08-25
 
 ### Added
