@@ -2,6 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const fs = require('node:fs/promises');
+const PACKAGE_ROOT = path.join(__dirname, '..');
 const {
   resolveTargetPath,
   isSharedFile,
@@ -89,9 +91,45 @@ test('global scope keeps codex references beside its AGENTS.md', () => {
   assert.equal(rel(target), path.join('.codex', 'dopod-design', 'references', 'ai.md'));
 });
 
-test('copilot has no user-scope target', () => {
-  assert.equal(resolveTargetPath(BASE, 'copilot/.github/copilot-instructions.md', { global: true }), null);
-  assert.ok(unsupportedInGlobal(ALL_TOOLS).includes('copilot'));
+test('copilot user scope writes to ~/.copilot/instructions', () => {
+  // VS Code reads user-level instructions from here, and only files ending
+  // .instructions.md. Verified against the VS Code docs 2026-08-25.
+  assert.ok(!unsupportedInGlobal(ALL_TOOLS).includes('copilot'));
+
+  assert.equal(
+    rel(resolveTargetPath(BASE, 'copilot/.github/instructions/dopod-design-ai.instructions.md', { global: true })),
+    path.join('.copilot', 'instructions', 'dopod-design-ai.instructions.md')
+  );
+  assert.equal(
+    rel(resolveTargetPath(BASE, 'copilot/user/dopod-design.instructions.md', { global: true })),
+    path.join('.copilot', 'instructions', 'dopod-design.instructions.md')
+  );
+});
+
+test('copilot-instructions.md is workspace-only, and the user variant project-only', () => {
+  // There is no user-scope equivalent of copilot-instructions.md. Writing it
+  // into ~/.copilot/instructions would install cleanly and be ignored, which
+  // is worse than skipping it.
+  assert.equal(
+    resolveTargetPath(BASE, 'copilot/.github/copilot-instructions.md', { global: true }),
+    null
+  );
+  // And the reverse: the user variant must not appear in a project install,
+  // where copilot-instructions.md already carries the always-on body.
+  assert.equal(
+    resolveTargetPath(BASE, 'copilot/user/dopod-design.instructions.md', {}),
+    null
+  );
+});
+
+test('the copilot user-scope file carries applyTo, or it would never apply', async () => {
+  // Without frontmatter VS Code loads an instructions file but never attaches
+  // it automatically. A global install would then be a silent no-op.
+  const body = await fs.readFile(
+    path.join(PACKAGE_ROOT, 'dist', 'copilot', 'user', 'dopod-design.instructions.md'),
+    'utf8'
+  );
+  assert.match(body, /^---\napplyTo: "\*\*"\n---\n/);
 });
 
 test('claude-code and cursor global targets stay in their dotdirs', () => {
@@ -140,7 +178,7 @@ test('the shared reference payload lands where the pointers cite it', () => {
 test('windsurf and cline have no user-scope target', () => {
   assert.equal(resolveTargetPath(BASE, 'windsurf/rules/x.md', { global: true }), null);
   assert.equal(resolveTargetPath(BASE, 'cline/10-dopod-design.md', { global: true }), null);
-  assert.deepEqual(unsupportedInGlobal(ALL_TOOLS).sort(), ['cline', 'copilot', 'windsurf']);
+  assert.deepEqual(unsupportedInGlobal(ALL_TOOLS).sort(), ['cline', 'windsurf']);
 });
 
 test('Zed is deliberately not a target', () => {

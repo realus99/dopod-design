@@ -7,6 +7,19 @@ All notable changes to this project are documented here. This project follows
 
 ### Added
 
+- **`--global` now supports Copilot.** VS Code reads user-level instructions
+  from `~/.copilot/instructions`, so Copilot is no longer skipped at user
+  scope. Re-checked against the VS Code documentation on 2026-08-25; it was
+  genuinely not available when the tool list was first drawn up.
+
+  Two details decide the implementation. That directory loads only
+  `*.instructions.md`, so `copilot-instructions.md` has no user-level
+  equivalent — its content ships as `dopod-design.instructions.md` instead of
+  being written somewhere it would be ignored. And an instructions file without
+  `applyTo` frontmatter is loaded but never attached automatically, so the
+  user-scope always-on file carries `applyTo: "**"`. Without it the install
+  would succeed and then quietly do nothing.
+
 - **The weekly drift check now verifies the `@carbon/ibm-products`
   released/canary split.** `ibm-products.md` names 47 components as usable
   without a flag, and components graduate between minors — so that list was the

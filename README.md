@@ -86,9 +86,15 @@ owns the region between its own markers:
 <!-- dopod-design:end -->
 ```
 
-`--global` writes to `~/.claude/skills/`, `~/.cursor/rules/`, and
-`~/.codex/AGENTS.md`. Copilot instruction files are repository-scoped by design,
-so Copilot is skipped in `--global` mode and the CLI says so.
+`--global` writes to `~/.claude/skills/`, `~/.cursor/rules/`,
+`~/.copilot/instructions/`, and `~/.codex/`. Windsurf and Cline have no usable
+user-level location, so they are skipped in `--global` mode and the CLI says so.
+
+Copilot's user scope loads only `*.instructions.md` files, so
+`copilot-instructions.md` — which is workspace-only — ships as
+`dopod-design.instructions.md` there instead. If your VS Code sets
+`chat.instructionsFilesLocations`, make sure it has not disabled the user
+location, or the files install correctly and are never read.
 
 ---
 
