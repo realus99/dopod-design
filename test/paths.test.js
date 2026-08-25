@@ -8,6 +8,7 @@ const {
   toolOf,
   unsupportedInGlobal,
   ALL_TOOLS,
+  POINTER_TOOLS,
 } = require('../lib/paths.js');
 
 const BASE = path.join(path.sep, 'tmp', 'project');
@@ -90,7 +91,7 @@ test('global scope keeps codex references beside its AGENTS.md', () => {
 
 test('copilot has no user-scope target', () => {
   assert.equal(resolveTargetPath(BASE, 'copilot/.github/copilot-instructions.md', { global: true }), null);
-  assert.deepEqual(unsupportedInGlobal(ALL_TOOLS), ['copilot']);
+  assert.ok(unsupportedInGlobal(ALL_TOOLS).includes('copilot'));
 });
 
 test('claude-code and cursor global targets stay in their dotdirs', () => {
@@ -104,9 +105,54 @@ test('claude-code and cursor global targets stay in their dotdirs', () => {
   );
 });
 
+test('windsurf rules land in .windsurf/rules', () => {
+  assert.equal(
+    rel(resolveTargetPath(BASE, 'windsurf/rules/dopod-design-tokens.md')),
+    path.join('.windsurf', 'rules', 'dopod-design-tokens.md')
+  );
+});
+
+test('cline rules land in .clinerules', () => {
+  assert.equal(
+    rel(resolveTargetPath(BASE, 'cline/10-dopod-design.md')),
+    path.join('.clinerules', '10-dopod-design.md')
+  );
+});
+
+test('gemini writes GEMINI.md at the project root and ~/.gemini at user scope', () => {
+  assert.equal(rel(resolveTargetPath(BASE, 'gemini/GEMINI.md')), 'GEMINI.md');
+  assert.equal(
+    rel(resolveTargetPath(BASE, 'gemini/GEMINI.md', { global: true })),
+    path.join('.gemini', 'GEMINI.md')
+  );
+});
+
+test('the shared reference payload lands where the pointers cite it', () => {
+  // Codex, Windsurf, Cline and Gemini all cite .dopod-design/references/. The
+  // payload is emitted once under shared/ rather than duplicated per tool.
+  assert.equal(
+    rel(resolveTargetPath(BASE, 'shared/.dopod-design/references/tokens.md')),
+    path.join('.dopod-design', 'references', 'tokens.md')
+  );
+  assert.deepEqual(POINTER_TOOLS.sort(), ['cline', 'codex', 'gemini', 'windsurf']);
+});
+
+test('windsurf and cline have no user-scope target', () => {
+  assert.equal(resolveTargetPath(BASE, 'windsurf/rules/x.md', { global: true }), null);
+  assert.equal(resolveTargetPath(BASE, 'cline/10-dopod-design.md', { global: true }), null);
+  assert.deepEqual(unsupportedInGlobal(ALL_TOOLS).sort(), ['cline', 'copilot', 'windsurf']);
+});
+
+test('Zed is deliberately not a target', () => {
+  // Zed reads AGENTS.md, which claude-code and codex already write. A .rules
+  // file would take higher priority in Zed's lookup and displace it.
+  assert.ok(!ALL_TOOLS.includes('zed'));
+});
+
 test('an unrecognised tool prefix is a build error, not a silent write', () => {
   assert.throws(
-    () => resolveTargetPath(BASE, 'windsurf/rules.md'),
+    // Not a real editor name; this used 'windsurf' until it became supported.
+    () => resolveTargetPath(BASE, 'notatool/rules.md'),
     (err) => err.exitCode === 12
   );
 });

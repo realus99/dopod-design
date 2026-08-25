@@ -44,8 +44,39 @@ test('the build emits one output per tool for the skill and each reference', asy
     assert.ok(
       await exists(path.join(distDir, 'copilot', '.github', 'instructions', `dopod-design-${ref.slug}.instructions.md`))
     );
-    assert.ok(await exists(path.join(distDir, 'codex', '.dopod-design', 'references', ref.file)));
+    assert.ok(await exists(path.join(distDir, 'shared', '.dopod-design', 'references', ref.file)));
   }
+});
+
+test('windsurf rules respect the 12,000-character cap', async () => {
+  const { distDir } = await buildIntoTmp();
+  const dir = path.join(distDir, 'windsurf', 'rules');
+  for (const name of await fs.readdir(dir)) {
+    const body = await fs.readFile(path.join(dir, name), 'utf8');
+    assert.ok(body.length <= 12000,
+      `${name} is ${body.length} chars; Windsurf caps a workspace rule at 12000`);
+  }
+});
+
+test('references too large for windsurf are still reachable via the pointer', async () => {
+  const { distDir } = await buildIntoTmp();
+  const rules = await fs.readdir(path.join(distDir, 'windsurf', 'rules'));
+  const shipped = rules.filter((n) => n !== 'dopod-design.md').length;
+  assert.ok(shipped < REFERENCES.length, 'some references exceed the cap');
+  // Every reference, including the oversized ones, ships in the shared payload.
+  for (const ref of REFERENCES) {
+    assert.ok(await exists(
+      path.join(distDir, 'shared', '.dopod-design', 'references', ref.file)));
+  }
+});
+
+test('cline gets one always-on rule, not the whole reference set', async () => {
+  const { distDir } = await buildIntoTmp();
+  const top = (await fs.readdir(path.join(distDir, 'cline')))
+    .filter((n) => n.endsWith('.md'));
+  // Cline merges every file in .clinerules/ into one always-on rule set, so
+  // shipping twelve references would put the whole skill in every prompt.
+  assert.deepEqual(top, ['10-dopod-design.md']);
 });
 
 test('intake is manual — it must not attach to file types', () => {

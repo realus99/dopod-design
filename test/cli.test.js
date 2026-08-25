@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { parseArgs, renderHelp, main, packageVersion } = require('../lib/cli.js');
+const { ALL_TOOLS } = require('../lib/paths.js');
 const { captureIO } = require('./helpers.js');
 
 test('no arguments shows help rather than doing anything', () => {
@@ -20,7 +21,7 @@ test('version is reachable by flag or subcommand', () => {
 test('install defaults to every tool, project scope, writing for real', () => {
   const { command, flags } = parseArgs(['install']);
   assert.equal(command, 'install');
-  assert.deepEqual(flags.tools, ['claude-code', 'cursor', 'copilot', 'codex']);
+  assert.deepEqual(flags.tools, ALL_TOOLS);
   assert.equal(flags.global, false);
   assert.equal(flags.dryRun, false);
 });
@@ -38,15 +39,15 @@ test('--tools accepts both = and space forms', () => {
 });
 
 test('--tools=all expands to every tool', () => {
-  assert.deepEqual(parseArgs(['install', '--tools=all']).flags.tools, [
-    'claude-code', 'cursor', 'copilot', 'codex',
-  ]);
+  assert.deepEqual(parseArgs(['install', '--tools=all']).flags.tools, ALL_TOOLS);
 });
 
 test('an unknown tool is rejected and the valid ones are listed', () => {
+  // Deliberately not a real editor name — this test used 'windsurf' until
+  // windsurf became a supported target.
   assert.throws(
-    () => parseArgs(['install', '--tools=windsurf']),
-    (err) => err.exitCode === 64 && /claude-code, cursor, copilot, codex/.test(err.message)
+    () => parseArgs(['install', '--tools=notatool']),
+    (err) => err.exitCode === 64 && ALL_TOOLS.every((t) => err.message.includes(t))
   );
 });
 

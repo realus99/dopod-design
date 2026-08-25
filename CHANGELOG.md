@@ -3,6 +3,37 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Windsurf, Gemini CLI, and Cline targets.** `--tools` now accepts
+  `windsurf`, `gemini`, and `cline`; `install`, `update`, `check`, and
+  `uninstall` handle all seven.
+
+  Each got the shape it actually loads, which differs more than expected:
+  Windsurf caps a workspace rule at **12,000 characters**, so the four
+  references that exceed it ship only through the shared pointer; Cline merges
+  *every* file in `.clinerules/` into one always-on rule set, so it gets one
+  slim rule rather than twelve references flooding each prompt; `GEMINI.md` is
+  concatenated hierarchically into every prompt and may already belong to the
+  user, so it is marker-merged like `AGENTS.md`.
+
+  `--global` is unsupported for Windsurf and Cline — their global locations are
+  size-capped or outside the home dotfile convention — and the CLI says so
+  rather than skipping silently.
+
+- **Zed is deliberately not a target.** Its rules lookup is first-match-wins and
+  already includes `AGENTS.md` and `.github/copilot-instructions.md`, both of
+  which this package writes. A `.rules` file would take higher priority and
+  displace them.
+
+### Changed
+
+- The shared reference payload is emitted once under `shared/` instead of being
+  duplicated per pointing tool. Four copies of twelve references had grown the
+  unpacked tarball to 1.28 MB; it is now 890 kB with three more tools supported.
+
 ## [0.3.0] — 2026-08-25
 
 ### Added
