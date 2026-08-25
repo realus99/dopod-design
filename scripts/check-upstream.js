@@ -262,6 +262,77 @@ function claimedDurations() {
 
 // ── comparison ─────────────────────────────────────────────────────────────
 
+/**
+ * Which @carbon/ibm-products components are released, and which are canary?
+ *
+ * This is the claim in the package most likely to go quietly false: components
+ * graduate between minors, and the file lists 47 of them by name. A stale list
+ * fails in the expensive direction — naming something as released when it is
+ * still canary sends someone to design around a component that will not render,
+ * which is the exact failure ibm-products.md exists to prevent.
+ *
+ * Derived from the published package's own flag defaults rather than from a
+ * second hand-written list here, which would drift in step with the file it is
+ * meant to guard. `true` means released; `false` means behind a canary flag.
+ */
+async function upstreamIbmProducts() {
+  // This is the only surface reading from unpkg rather than the Carbon repo or
+  // the npm registry. An outage there must not take the other six down with
+  // it — a drift check that fails open on one source is still useful; one that
+  // dies entirely gets muted.
+  let src;
+  try {
+    src = await fetchText(
+      'https://unpkg.com/@carbon/ibm-products/es/global/js/package-settings.js'
+    );
+  } catch {
+    return null;
+  }
+  const block = src.match(/component:\s*\{([\s\S]*?)\n\t\}/);
+  if (!block) return null;   // shape changed; reported as a gap, never a pass
+
+  const released = new Set();
+  const canary = new Set();
+  for (const m of block[1].matchAll(/(\w+):\s*(true|false)/g)) {
+    (m[2] === 'true' ? released : canary).add(m[1]);
+  }
+  if (released.size === 0) return null;
+  return { released, canary };
+}
+
+/**
+ * What ibm-products.md §3 claims. The released list is exhaustive and checked
+ * both ways. The canary list is explicitly illustrative — "and others" — so
+ * names there are checked for being canary, but absence is never an error.
+ */
+function claimedIbmProducts() {
+  const md = read('references/ibm-products.md');
+  const section = md.slice(
+    md.indexOf('## 3. What is released'),
+    md.indexOf('## 4.') === -1 ? undefined : md.indexOf('## 4.')
+  );
+  const split = section.indexOf('Behind canary flags');
+  const names = (text) => {
+    const out = new Set();
+    for (const m of text.matchAll(/`([A-Z][A-Za-z0-9]*)\*?`/g)) out.add(m[1]);
+    return out;
+  };
+  // Trailing `*` marks a family (Coachmark*), which names no single export.
+  const wildcards = new Set();
+  for (const m of section.matchAll(/`([A-Z][A-Za-z0-9]*)\*`/g)) wildcards.add(m[1]);
+
+  const counts = read('references/ibm-products.md').match(
+    /\*\*(\d+) released, (\d+) behind canary flags\.\*\*/
+  );
+  return {
+    released: names(split === -1 ? section : section.slice(0, split)),
+    canary: split === -1 ? new Set() : names(section.slice(split)),
+    wildcards,
+    statedReleased: counts ? Number(counts[1]) : null,
+    statedCanary: counts ? Number(counts[2]) : null,
+  };
+}
+
 async function main() {
   const json = process.argv.includes('--json');
   const errors = [];
@@ -334,10 +405,60 @@ async function main() {
     }
   }
 
+  // 7. the @carbon/ibm-products released/canary split
+  const ourProducts = claimedIbmProducts();
+  const products = await upstreamIbmProducts();
+  let productsChecked = 0;
+  if (!products) {
+    gaps.push({
+      surface: 'ibm-products',
+      detail: 'could not read the published flag defaults — package layout may have changed',
+    });
+  } else {
+    productsChecked = ourProducts.released.size;
+
+    // The direction that costs someone real time: we call it released, it is
+    // not, so an agent designs around a component that refuses to render.
+    for (const c of [...ourProducts.released].sort()) {
+      if (ourProducts.wildcards.has(c)) continue;
+      if (products.released.has(c)) continue;
+      const detail = products.canary.has(c)
+        ? 'documented as released but is behind a canary flag upstream'
+        : 'not found in @carbon/ibm-products at all';
+      errors.push({ surface: 'ibm-products', claim: c, detail });
+    }
+
+    // A component that graduated. Not dangerous, but the list claims to be
+    // exhaustive, so silence would make it quietly untrue.
+    for (const c of [...products.released].sort()) {
+      if (!ourProducts.released.has(c)) {
+        gaps.push({ surface: 'ibm-products', detail: `${c}: released upstream but not listed in §3` });
+      }
+    }
+
+    // Canary names are illustrative, so only the claim itself is checked.
+    for (const c of [...ourProducts.canary].sort()) {
+      if (ourProducts.wildcards.has(c)) continue;
+      if (products.released.has(c)) {
+        errors.push({ surface: 'ibm-products', claim: c, detail: 'documented as canary but has been released' });
+      }
+    }
+
+    if (ourProducts.statedReleased !== products.released.size ||
+        ourProducts.statedCanary !== products.canary.size) {
+      errors.push({
+        surface: 'ibm-products',
+        claim: 'the released/canary counts',
+        detail: `documented ${ourProducts.statedReleased}/${ourProducts.statedCanary}, ` +
+                `upstream ${products.released.size}/${products.canary.size}`,
+      });
+    }
+  }
+
   if (json) {
     console.log(JSON.stringify({ ok: errors.length === 0, errors, gaps }, null, 2));
   } else {
-    const checked = `${ourTokens.size} tokens · ${ourComponents.size - unverifiable} components · ${names.length} versions · ${Object.keys(majors).length} ports`;
+    const checked = `${ourTokens.size} tokens · ${ourComponents.size - unverifiable} components · ${names.length} versions · ${Object.keys(majors).length} ports · ${productsChecked} ibm-products`;
     if (errors.length) {
       console.error(`✗ upstream drift — ${errors.length} claim(s) no longer true\n`);
       for (const e of errors) console.error(`   [${e.surface}] ${e.claim} — ${e.detail}`);

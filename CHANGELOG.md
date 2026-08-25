@@ -3,6 +3,30 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **The weekly drift check now verifies the `@carbon/ibm-products`
+  released/canary split.** `ibm-products.md` names 47 components as usable
+  without a flag, and components graduate between minors — so that list was the
+  claim in the package most likely to go quietly false.
+
+  It matters in one direction especially: naming something as released when it
+  is still canary sends you to design around a component that refuses to
+  render, which is the exact failure the reference exists to prevent. The check
+  derives the split from the published package's own flag defaults, so it
+  cannot drift in step with the file it guards, and reports both directions
+  plus the stated counts.
+
+### Fixed
+
+- `ibm-products.md` §3 listed 44 of the 47 released components — the new check
+  found `CreateTearsheetDivider`, `WebTerminalProvider` and
+  `WebTerminalContentWrapper` missing on its first run. §3 now also states
+  plainly that the released list is complete and verified while the canary list
+  is a sample, so neither is mistaken for the other.
+
 ## [1.1.0] — 2026-08-25
 
 ### Added

@@ -85,13 +85,15 @@ Usable with no flag:
 `TearsheetNarrow` · `CreateTearsheet` · `CreateTearsheetNarrow`
 
 **Full-page flows** — `CreateFullPage` · `CreateFullPageStep` ·
-`CreateTearsheetStep` · `CreateModal` · `InterstitialScreen`
+`CreateTearsheetStep` · `CreateTearsheetDivider` · `CreateModal` ·
+`InterstitialScreen`
 
 **Data** — `Datagrid` · `TagSet` · `MultiAddSelect` · `SingleAddSelect` ·
 `Cascade` · `Checklist` · `OptionsTile`
 
 **Page furniture** — `PageHeader` · `NotificationsPanel` · `WebTerminal` ·
-`Saving` · `EditInPlace` · `UserAvatar` · `UserProfileImage` · `StatusIcon`
+`WebTerminalProvider` · `WebTerminalContentWrapper` · `Saving` · `EditInPlace` ·
+`UserAvatar` · `UserProfileImage` · `StatusIcon`
 
 **Cards** — `ProductiveCard` · `ExpressiveCard`
 
@@ -100,11 +102,17 @@ Usable with no flag:
 `ErrorEmptyState`, `UnauthorizedEmptyState`) · `FullPageError` ·
 `HTTPError403` · `HTTPError404` · `HTTPErrorOther`
 
+The released list above is complete and machine-checked against the published
+package weekly. The canary list below is a sample, not an inventory — only the
+names shown are verified, and there are many more.
+
 Behind canary flags at present: `Toolbar`, `DataSpreadsheet`, `EditTearsheet`,
 `EditSidePanel`, `EditFullPage`, `Nav`, `ConditionBuilder`, `FilterPanel`,
 `Coachmark*`, `Guidebanner`, `InlineTip`, `NonLinearReading`, and others.
-**Check `pkg.component` at the version you have rather than trusting this
-list** — components graduate between minors.
+
+**Check `pkg.component` at the version you have rather than trusting either
+list** — components graduate between minors, and your installed version may not
+be the one this was checked against.
 
 ---
 
