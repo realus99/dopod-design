@@ -109,8 +109,46 @@ The hard part is animating to a height you do not know. **`height: auto` is not
 animatable**, which is why so many disclosure animations either jump or get
 hard-coded to a wrong pixel value.
 
-**`[house]` — the CSS-variable technique**, borrowed from Radix. Measure once,
-publish the height as a custom property, animate to it:
+There are two good answers. Reach for the first unless you need what the second
+gives you.
+
+**`[house]` — the grid technique. Start here.** A grid row animates between
+`0fr` and `1fr`, and `fr` resolves against the content's own height — so the
+browser does the measuring and you write no JavaScript at all:
+
+```jsx
+<div className="disclosure" data-state={open ? 'open' : 'closed'}>
+  <div className="disclosure__inner">{children}</div>
+</div>
+```
+
+```scss
+@use '@carbon/react/scss/motion' as *;
+
+.disclosure {
+  display: grid;
+  transition: grid-template-rows surface(disclosure);
+
+  &[data-state='closed'] { grid-template-rows: 0fr; }
+  &[data-state='open']   { grid-template-rows: 1fr; }
+}
+
+.disclosure__inner {
+  overflow: hidden;   // without this the content spills out of the 0fr row
+  min-block-size: 0;  // grid items default to min-content; this lets it reach 0
+}
+```
+
+The wrapper element is required — the animating row and the clipped content
+cannot be the same element. Both declarations on `__inner` are load-bearing;
+leaving either out is why this technique sometimes gets written off as not
+working. Content that resizes while open is handled for free, which is the part
+the measured approach gets wrong.
+
+**`[house]` — the measured-height technique**, borrowed from Radix. Reach for it
+when you need the height as an actual value — to drive a second animation, to
+scroll the panel into view, or when a wrapper element is not available. Measure
+once, publish the height as a custom property, animate to it:
 
 ```jsx
 const ref = useRef(null);
@@ -141,11 +179,15 @@ useLayoutEffect(() => {
 }
 ```
 
-The timing is Carbon's; only the measure-and-publish mechanism is ours.
+The timing is Carbon's in both; only the mechanism is ours.
+
+The cost of this one is a layout read on every content change. If `children`
+changes and you forget the dependency, the panel animates to a stale height —
+the failure the grid technique cannot have.
 
 **Modern alternative:** `interpolate-size: allow-keywords` makes `height: auto`
-animatable directly. Browser support is still thin — use it as a progressive
-enhancement behind `@supports`, not as the only path.
+animatable directly. Support is real but not universal — use it as a
+progressive enhancement behind `@supports`, not as the only path.
 
 ---
 

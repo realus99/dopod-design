@@ -3,7 +3,18 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] — 2026-08-25
+
+**1.0.0 is a stability commitment, not a feature release.** Install paths and
+emitted filenames are now fixed: renaming `dopod-design-*.md`, moving where a
+tool's files land, or changing the lockfile's location would break existing
+installs' ability to update or uninstall cleanly, so those are breaking changes
+from here. The content will keep moving; the contract with your repo will not.
+
+What that rests on: 129 tests, CI across Linux/macOS/Windows and Node 20/22/24,
+a weekly drift check that verifies every token, component, version and port
+Carbon major against the upstream repository, publishing with SLSA provenance,
+and an uninstall that returns a pre-existing file byte-identical.
 
 ### Added
 
@@ -22,6 +33,17 @@ All notable changes to this project are documented here. This project follows
   install block — it is a deliberate extra layer, not part of a Carbon setup.
 
 ### Fixed
+
+- **`motion.md` recommended the wrong technique first.** Animating a
+  disclosure to an unknown height now leads with the grid approach —
+  `grid-template-rows` between `0fr` and `1fr`, which needs no JavaScript
+  because `fr` resolves against the content's own height. The measured-height
+  technique is still documented, but as the fallback for when you need the
+  height as a real value.
+
+  This came out of measurement rather than review: a baseline model with no
+  skill installed reached for the grid technique unprompted, on a file that did
+  not mention it. Guidance a capable model beats is worse than no guidance.
 
 - `components.md` said `Tearsheet` "lives in `@carbon/ibm-products`" with
   nowhere to send the reader. Those pointers now resolve, and a test fails the
