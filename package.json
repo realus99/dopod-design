@@ -1,6 +1,6 @@
 {
   "name": "dopod-design",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "IBM Carbon Design System guidance as an installable skill for Claude Code, Cursor, GitHub Copilot, and OpenAI Codex.",
   "keywords": [
     "dopod",
