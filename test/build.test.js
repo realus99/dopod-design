@@ -101,6 +101,16 @@ test('the worked example is registered and scoped to component files', () => {
   assert.ok(!ref.globs.includes('scss'));
 });
 
+test('the example does not wrap a top-level Tile in <Layer>', async () => {
+  // It did, and its annotation had the rule backwards. <Theme> already provides
+  // LayerContext = 1, so a nested <Layer> renders cds--layer-two and the Tile
+  // paints $layer-02 — which in g10 is the same value as $background. The
+  // wrapper added to make the tile stand out is what made it disappear.
+  // An eval run copied this verbatim before it was caught.
+  const md = await fs.readFile(path.join(PACKAGE_ROOT, 'references/example.md'), 'utf8');
+  assert.doesNotMatch(md, /<Column[^>]*>(?:(?!<Tile)[\s\S]){0,400}?<Layer>\s*(?:\{\/\*[\s\S]*?\*\/\}\s*)?<Tile/);
+});
+
 test('the example only uses v11 type token names', async () => {
   // productive-heading-04 nearly shipped here. The v10 aliases still resolve in
   // v11, so nothing upstream can catch this — the rename table in tokens.md is

@@ -3,6 +3,25 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`example.md` had the `<Layer>` rule backwards, and the code was wrong.** It
+  wrapped each metric `Tile` in `<Layer>` and claimed that without the wrapper
+  "they render the same colour as the page and the card edges disappear."
+
+  The opposite is true. `<Theme>` already provides `LayerContext = 1`, so a
+  `Tile` under it paints `$layer-01` — white against a `$background` of gray 10
+  in `g10`, and visible. `<Layer>` *increments*: it renders `cds--layer-two`,
+  so the tile paints `$layer-02`, which in `g10` **is** `$background`. The
+  wrapper added to make the tile stand out is what made it vanish.
+
+  The section now explains what `<Layer>` is actually for — a surface nested
+  inside another surface — and a test fails the build if the pattern comes
+  back. Found while writing an eval assertion for it, which is the only reason
+  it surfaced: an eval run had already copied the pattern verbatim.
+
 ## [1.3.0] — 2026-08-25
 
 ### Added

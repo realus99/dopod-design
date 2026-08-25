@@ -194,7 +194,7 @@ a layout that looks right on a laptop and collapses to a sliver on a phone.
 
 ```jsx
 // components/MetricTiles.jsx
-import { Grid, Column, Tile, Layer } from '@carbon/react';
+import { Grid, Column, Tile } from '@carbon/react';
 
 const METRICS = [
   { label: 'Deploys today', value: '18' },
@@ -210,22 +210,34 @@ export default function MetricTiles() {
         // Four across on large, two on medium, one on small. Four metrics on a
         // phone would each be ~90px wide and unreadable.
         <Column key={m.label} sm={4} md={4} lg={4}>
-          {/* Layer bumps the contextual layer token one step. Tiles sit *on*
-              the page background, so they need $layer to resolve one level up
-              — without the wrapper they render the same colour as the page and
-              the card edges disappear. */}
-          <Layer>
-            <Tile>
-              <p className="metric__label">{m.label}</p>
-              <p className="metric__value">{m.value}</p>
-            </Tile>
-          </Layer>
+          {/* No <Layer> here, and that is deliberate — see below. */}
+          <Tile>
+            <p className="metric__label">{m.label}</p>
+            <p className="metric__value">{m.value}</p>
+          </Tile>
         </Column>
       ))}
     </Grid>
   );
 }
 ```
+
+**Why there is no `<Layer>` here.** This is the trap worth knowing, because the
+instinct is to reach for one.
+
+`<Theme>` already puts you at layer one, so `$layer` — the token `Tile` paints
+itself with — resolves to `$layer-01`. In `g10` that is white against a
+`$background` of gray 10. The tile is visible because it is already on the
+right layer.
+
+`<Layer>` *increments*. Wrapping a top-level tile in one pushes it to
+`$layer-02`, which in `g10` is gray 10 — **the same value as the page
+background**. The tile disappears, and the wrapper you added to make it stand
+out is what removed it.
+
+Reach for `<Layer>` when a surface sits inside another surface — a tile within
+a tile, content inside an already-raised panel. Not for a surface sitting
+directly on the page.
 
 ```scss
 // Type tokens, not font sizes. These carry size, weight, line-height and
@@ -255,7 +267,7 @@ export default function MetricTiles() {
 import {
   DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCell,
   TableContainer, TableToolbar, TableToolbarContent, TableToolbarSearch,
-  Button, Tag, Layer,
+  Button, Tag,
 } from '@carbon/react';
 
 const headers = [
@@ -267,61 +279,59 @@ const headers = [
 
 export default function DeployTable({ rows = [], onDeploy }) {
   return (
-    <Layer>
-      <DataTable rows={rows} headers={headers} isSortable>
-        {({ rows, headers, getHeaderProps, getRowProps, getTableProps,
-            getToolbarProps, onInputChange }) => (
-          <TableContainer
-            title="Recent deployments"
-            // Not decoration. It is the accessible description of the table,
-            // and it is where you say what the data means.
-            description="Last 50 deployments across all environments"
-          >
-            <TableToolbar {...getToolbarProps()}>
-              <TableToolbarContent>
-                {/* Filters client-side through DataTable's own state. Wiring
-                    your own useState here means sorting and searching stop
-                    knowing about each other. */}
-                <TableToolbarSearch onChange={onInputChange} persistent />
-                <Button onClick={onDeploy}>Deploy</Button>
-              </TableToolbarContent>
-            </TableToolbar>
+    <DataTable rows={rows} headers={headers} isSortable>
+      {({ rows, headers, getHeaderProps, getRowProps, getTableProps,
+          getToolbarProps, onInputChange }) => (
+        <TableContainer
+          title="Recent deployments"
+          // Not decoration. It is the accessible description of the table,
+          // and it is where you say what the data means.
+          description="Last 50 deployments across all environments"
+        >
+          <TableToolbar {...getToolbarProps()}>
+            <TableToolbarContent>
+              {/* Filters client-side through DataTable's own state. Wiring
+                  your own useState here means sorting and searching stop
+                  knowing about each other. */}
+              <TableToolbarSearch onChange={onInputChange} persistent />
+              <Button onClick={onDeploy}>Deploy</Button>
+            </TableToolbarContent>
+          </TableToolbar>
 
-            <Table {...getTableProps()} size="sm">
-              {/* size="sm": 32px rows. Dense data wants more rows on screen;
-                  the default md is right for a short list you read carefully. */}
-              <TableHead>
-                <TableRow>
-                  {headers.map((header) => {
-                    // getHeaderProps returns a key. Spreading it and *also*
-                    // writing key={...} is the usual source of the React
-                    // duplicate-key warning here.
-                    const { key, ...rest } = getHeaderProps({ header });
-                    return <TableHeader key={key} {...rest}>{header.header}</TableHeader>;
-                  })}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((row) => {
-                  const { key, ...rest } = getRowProps({ row });
-                  return (
-                    <TableRow key={key} {...rest}>
-                      {row.cells.map((cell) => (
-                        <TableCell key={cell.id}>
-                          {cell.info.header === 'status'
-                            ? <StatusTag value={cell.value} />
-                            : cell.value}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  );
+          <Table {...getTableProps()} size="sm">
+            {/* size="sm": 32px rows. Dense data wants more rows on screen;
+                the default md is right for a short list you read carefully. */}
+            <TableHead>
+              <TableRow>
+                {headers.map((header) => {
+                  // getHeaderProps returns a key. Spreading it and *also*
+                  // writing key={...} is the usual source of the React
+                  // duplicate-key warning here.
+                  const { key, ...rest } = getHeaderProps({ header });
+                  return <TableHeader key={key} {...rest}>{header.header}</TableHeader>;
                 })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </DataTable>
-    </Layer>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.map((row) => {
+                const { key, ...rest } = getRowProps({ row });
+                return (
+                  <TableRow key={key} {...rest}>
+                    {row.cells.map((cell) => (
+                      <TableCell key={cell.id}>
+                        {cell.info.header === 'status'
+                          ? <StatusTag value={cell.value} />
+                          : cell.value}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+    </DataTable>
   );
 }
 
@@ -413,7 +423,7 @@ form feels hostile.
 
 ## 8. What to change when you copy this
 
-**Keep:** the shell composition, `<Layer>` around surfaces, `Stack` for
+**Keep:** the shell composition, `Stack` for
 spacing, `DataTable`'s render props, `invalid`/`invalidText`, and every token
 name. Those are the parts that survive a theme switch and an audit.
 
