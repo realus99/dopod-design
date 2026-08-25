@@ -26,6 +26,14 @@ jobs:
         with:
           fetch-depth: 0        # tag annotations are the release notes
 
+      # actions/checkout does not reliably materialise the annotated tag
+      # *object* even at fetch-depth 0 — the ref can land as a lightweight tag.
+      # When that happens `%(contents)` falls back to the commit message, and
+      # v1.0.0 shipped release notes that were actually its commit message,
+      # trailers and all (#30). Re-fetching forces the real objects.
+      - name: Fetch tag objects
+        run: git fetch --force --tags --prune
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -52,6 +60,20 @@ jobs:
                 echo "::error::Tag $TAG does not match package.json version $PKG_VERSION"
                 exit 1
               fi
+
+              # Checked here rather than at the release step on purpose: that
+              # runs *after* npm publish, so failing there would leave a
+              # published version with no release page and no way to retry —
+              # npm versions cannot be reused. Fail before anything ships.
+              OBJ=$(git cat-file -t "$TAG" 2>/dev/null || echo missing)
+              if [ "$OBJ" != "tag" ]; then
+                echo "::error::$TAG is a $OBJ, not an annotated tag. The release"
+                echo "::error::notes come from the tag annotation; a lightweight"
+                echo "::error::tag silently publishes the commit message instead."
+                echo "::error::Re-cut it with: git tag -a $TAG -F - <<'EOF' ... EOF"
+                exit 1
+              fi
+              echo "$TAG is annotated; its message will be the release notes"
               ;;
             *)
               # Dispatched from a branch: rehearse the checks, never publish.
@@ -96,10 +118,26 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           # The annotated tag message is the release notes — written when the
-          # release was cut, by whoever cut it.
+          # release was cut, by whoever cut it. The version step has already
+          # asserted this tag is annotated, so %(contents) cannot fall through
+          # to the commit message here.
           git tag -l --format='%(contents)' "$TAG" > notes.md
+
+          # Commit trailers are for the git log, not the release page. These
+          # reached v1.0.0's notes via the fallback bug; strip them so they
+          # cannot again, whatever the annotation happens to contain.
+          # No `sed -i` — BSD sed reads the next argument as a backup suffix,
+          # so `-i -E` silently means something else and the strip no-ops. A
+          # temp file behaves identically everywhere, including when someone
+          # runs these lines by hand on macOS to check them.
+          sed -E '/^(Co-Authored-By|Claude-Session|Signed-off-by):/d' notes.md > notes.clean
+          # …and drop any blank lines that stripping left at the end.
+          printf '%s\n' "$(cat notes.clean)" > notes.md
+          rm -f notes.clean
+
           if [ ! -s notes.md ]; then
-            echo "See CHANGELOG.md for what changed in $TAG." > notes.md
+            echo "::error::$TAG has an annotation but it is empty after cleanup"
+            exit 1
           fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --notes-file notes.md
