@@ -368,3 +368,75 @@ test('install → check → uninstall → check completes the round trip', async
   await uninstallCommand(flags({ cwd }), captureIO());
   assert.equal(await checkCommand(flags({ cwd }), captureIO()), 2);
 });
+
+// --- build identity in the lockfile (#17) -----------------------------------
+//
+// `check` used to report every difference as "edited", so a file a different
+// build had written read identically to one the user had changed by hand. The
+// two need opposite advice: one is safe to overwrite, the other is not.
+
+test('the lockfile records which build wrote the files', async () => {
+  const cwd = await tmpDir('payload-recorded');
+  assert.equal(await installCommand(flags({ cwd, tools: ['cursor'] }), captureIO()), 0);
+
+  const lock = await readLock(cwd);
+  const { manifest } = await require('../lib/resolve-dist.js').resolveDist();
+  assert.match(lock.payload_sha256, /^[0-9a-f]{64}$/);
+  assert.equal(lock.payload_sha256, manifest.payload_sha256);
+  // Distinct from canonical_sha256, which covers SKILL.md alone and so cannot
+  // see a reference file change at all.
+  assert.notEqual(manifest.payload_sha256, manifest.canonical_sha256);
+});
+
+test('check calls a hand-edited file edited, and warns before update eats it', async () => {
+  const cwd = await tmpDir('drift-edited');
+  assert.equal(await installCommand(flags({ cwd, tools: ['cursor'] }), captureIO()), 0);
+
+  await fs.appendFile(path.join(cwd, TOKENS_RULE), '\nmy own note\n');
+
+  const io = captureIO();
+  assert.equal(await checkCommand(flags({ cwd }), io), 1);
+  assert.match(io.err, /edited: .*dopod-design-tokens\.mdc/);
+  assert.doesNotMatch(io.err, /rewritten:/);
+  assert.match(io.err, /will overwrite the edited files/);
+});
+
+test('check calls a different build\'s content rewritten, not edited', async () => {
+  const cwd = await tmpDir('drift-rewritten');
+  assert.equal(await installCommand(flags({ cwd, tools: ['cursor'] }), captureIO()), 0);
+
+  // The file on disk is untouched and matches what the package ships. Only the
+  // lockfile disagrees — which is what a different build having written it
+  // looks like from here.
+  const lock = await readLock(cwd);
+  for (const entry of lock.files_written) {
+    if (entry.path.includes('tokens')) entry.sha256 = '0'.repeat(64);
+  }
+  lock.payload_sha256 = 'f'.repeat(64);
+  await writeLock(cwd, lock);
+
+  const io = captureIO();
+  assert.equal(await checkCommand(flags({ cwd }), io), 1);
+  assert.match(io.err, /rewritten: .*dopod-design-tokens\.mdc/);
+  assert.doesNotMatch(io.err, /edited: .*dopod-design-tokens\.mdc/);
+  // No edit means nothing of the user's is at risk, so no overwrite warning.
+  assert.doesNotMatch(io.err, /will overwrite the edited files/);
+  assert.match(io.err, /Installed from a different build/);
+});
+
+test('a lockfile from before build tracking still works, and says what it cannot tell', async () => {
+  const cwd = await tmpDir('drift-legacy-lock');
+  assert.equal(await installCommand(flags({ cwd, tools: ['cursor'] }), captureIO()), 0);
+
+  const lock = await readLock(cwd);
+  delete lock.payload_sha256;          // exactly what v0.1.0 wrote
+  await writeLock(cwd, lock);
+
+  // Still in sync — the missing field must not read as drift.
+  assert.equal(await checkCommand(flags({ cwd }), captureIO()), 0);
+
+  await fs.appendFile(path.join(cwd, TOKENS_RULE), '\nmy own note\n');
+  const io = captureIO();
+  assert.equal(await checkCommand(flags({ cwd }), io), 1);
+  assert.match(io.err, /predates build tracking/);
+});

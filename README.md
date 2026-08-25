@@ -110,6 +110,20 @@ npx dopod-design check    # 0 = in sync, 1 = drift, 2 = not installed
 It hashes only the managed block inside shared files, so editing your own part
 of `AGENTS.md` never reports as drift.
 
+When something has changed, `check` distinguishes two cases that need opposite
+responses:
+
+- **`edited:`** — the file matches neither what we wrote nor what the package
+  ships now, so a person changed it. `update` will overwrite it, and `check`
+  says so.
+- **`rewritten:`** — the file matches what the package ships now, just not what
+  the lockfile recorded. A different build wrote it; nothing of yours is at
+  risk.
+
+Lockfiles written by an older version cannot support that distinction. `check` still
+works on them and says which part it cannot tell; re-running `install` records
+what it needs.
+
 Flags: `--tools=<list>`, `--global`, `--dry-run`, `--verbose`, `--help`,
 `--version`.
 

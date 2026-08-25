@@ -7,6 +7,21 @@ All notable changes to this project are documented here. This project follows
 
 ### Added
 
+- **`check` now tells a hand-edit from a different build.** Every difference
+  used to report as `edited:`, so a file some other build had written looked
+  exactly like one you had changed by hand — and the two want opposite
+  responses. The lockfile records a `payload_sha256` identifying the build that
+  wrote it, and `check` reports:
+
+  - `edited:` — matches neither what we wrote nor what the package ships, so a
+    person changed it. `update` overwrites it, and `check` now warns before you
+    run it.
+  - `rewritten:` — matches what the package ships now, just not the lockfile.
+    A different build wrote it; nothing of yours is at risk.
+
+  Backward compatible: a lockfile written before this still works, and `check`
+  states which part it cannot determine rather than guessing.
+
 - **README: "If it doesn't seem to fire".** The commonest report is that the
   skill is installed and the agent built something anyway. Usually it did load
   and you cannot tell, because a skill leaves no visible trace.
