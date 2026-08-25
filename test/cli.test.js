@@ -97,3 +97,25 @@ test('main returns 64 and writes to stderr on bad usage', async () => {
   assert.match(io.err, /Unknown command/);
   assert.equal(io.out, '');
 });
+
+// --- help text must track actual behaviour (#13) -----------------------------
+//
+// The --help text named copilot as global-unsupported for a full commit after
+// it stopped being true, because the string was edited in the wrong file and
+// nothing noticed. Prose and behaviour drift silently; assert they agree.
+
+test('--help names exactly the tools that are actually global-unsupported', () => {
+  const { unsupportedInGlobal } = require('../lib/paths.js');
+  const help = renderHelp();
+
+  const skipped = unsupportedInGlobal(ALL_TOOLS);
+  const clause = help.match(/--global is unsupported for ([^:]+):/);
+  assert.ok(clause, '--help should say which tools --global skips');
+
+  for (const tool of ALL_TOOLS) {
+    const named = new RegExp(`\\b${tool}\\b`).test(clause[1]);
+    assert.equal(named, skipped.includes(tool),
+      `--help ${named ? 'names' : 'omits'} ${tool} as global-unsupported, but ` +
+      `unsupportedInGlobal ${skipped.includes(tool) ? 'includes' : 'excludes'} it`);
+  }
+});
