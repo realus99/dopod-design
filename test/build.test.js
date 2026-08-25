@@ -68,6 +68,19 @@ test('README lists every reference, and its stated count is right', async () => 
     `README claims "${claimed[1]}" reference files but there are ${REFERENCES.length}`);
 });
 
+test('the figma reference attaches to token files, never to source', () => {
+  const ref = REFERENCES.find((r) => r.slug === 'figma');
+  assert.ok(ref, 'figma reference is registered');
+  assert.ok(ref.globs, 'it should attach to token files rather than be manual-only');
+  // A designer handing over values is a conversation, not an edit to a .tsx.
+  // Attaching this to components would surface it constantly and help rarely.
+  for (const ext of ['tsx', 'jsx', 'scss', 'css', 'vue', 'svelte']) {
+    assert.ok(!ref.globs.includes(ext),
+      `figma.md attaches to .${ext}; it should only match token files`);
+  }
+  assert.match(ref.globs, /json/);
+});
+
 test('react.md does not sell @carbon/test-utils as React test helpers', async () => {
   // It is a Sass renderer, last published 2019 at 10.3.0, with no v11 release.
   // The file used to describe it as providing "helpers for a11y assertions and

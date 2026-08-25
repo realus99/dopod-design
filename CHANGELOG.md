@@ -5,6 +5,28 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- **`references/figma.md` — the design-token pipeline.** Where the handoff
+  actually breaks: a designer sends a value and the value is not a token.
+
+  Covers both ends — Carbon's colors are Figma **variables** across the same
+  four themes the code has, and Carbon publishes machine-readable
+  [DTCG](https://tr.designtokens.org/format/) tokens in the repo at
+  `packages/themes/src/dtcg/`, which is the same format Tokens Studio speaks.
+
+  The rule that carries the file: **map by role, never by hex.** Several tokens
+  resolve to the same color within a theme, so picking by value picks one
+  arbitrarily and it holds until the theme changes — at which point one element
+  moves and the rest do not.
+
+  Also: which direction is truth (Carbon's tokens flow one way; a Figma export
+  that overwrites them forks the design system), why a flattened export is the
+  usual cause of "dark mode works in Figma but not in the build", how to have
+  the off-scale conversation as *16 or 24* rather than *no*, and a stylelint
+  rule for the objective half — with a warning not to automate token *choice*,
+  because a rule that guesses gets disabled within a week.
+
 ### Fixed
 
 - **`react.md` was wrong about `@carbon/test-utils`.** It described the package
