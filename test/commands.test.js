@@ -53,8 +53,11 @@ test('--tools installs only what was asked for', async () => {
 
   assert.ok(await exists(path.join(cwd, TOKENS_RULE)));
   assert.equal(await exists(path.join(cwd, SKILL)), false);
-  assert.equal(await exists(path.join(cwd, 'AGENTS.md')), false);
   assert.equal(await exists(path.join(cwd, COPILOT)), false);
+  // AGENTS.md *is* expected: it is Cursor's always-on layer (#32), the same
+  // file claude-code and codex use. Before that, a Cursor install had no
+  // unconditional layer at all — its slim rule was description-triggered.
+  assert.ok(await exists(path.join(cwd, 'AGENTS.md')));
 });
 
 test('--dry-run writes nothing at all', async () => {

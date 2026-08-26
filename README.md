@@ -58,17 +58,28 @@ Requires Node 18 or newer. No runtime dependencies.
 
 ## What gets written
 
-| Tool | Location |
-|---|---|
-| Claude Code | `.claude/skills/dopod-design/SKILL.md` + `references/`, **plus an always-on `AGENTS.md` block** |
-| Cursor | `.cursor/rules/carbon-*.mdc` (glob-scoped rules) |
-| GitHub Copilot | `.github/copilot-instructions.md` + `.github/instructions/carbon-*.instructions.md` |
-| OpenAI Codex | `AGENTS.md` + `.dopod-design/references/` |
+Every tool gets **two layers**: something its host loads on every request, and
+per-topic detail loaded on demand.
 
-Claude Code gets both layers deliberately. A skill is consulted only when the
-model decides it needs one, so a plain-sounding request — "add paging to the
-audit log list" — never reaches it. The always-on block carries the core rules
-regardless; the skill carries the depth.
+| Tool | Always-on | On demand |
+|---|---|---|
+| Claude Code | `AGENTS.md` block | `.claude/skills/dopod-design/SKILL.md` + `references/` |
+| Cursor | `AGENTS.md` block | `.cursor/rules/dopod-design-*.mdc` (glob-scoped) |
+| GitHub Copilot | `.github/copilot-instructions.md` | `.github/instructions/dopod-design-*.instructions.md` |
+| OpenAI Codex | `AGENTS.md` block | `.dopod-design/references/` |
+| Windsurf | `.windsurf/rules/dopod-design.md` | `.windsurf/rules/dopod-design-*.md` + `.dopod-design/references/` |
+| Gemini CLI | `GEMINI.md` block | `.dopod-design/references/` |
+| Cline | `.clinerules/10-dopod-design.md` | `.dopod-design/references/` |
+
+Claude Code, Cursor and Codex share one `AGENTS.md`; installing all three writes
+a single merged block, not three copies.
+
+The always-on layer is the point, not a convenience. A skill or a
+description-matched rule is consulted only when the model decides it needs one,
+so a plain-sounding request — "add paging to the audit log list" — never reaches
+it. Measured: 6 of 40 trigger queries fail under every description we could
+write, all sharing that shape. The always-on layer carries the core rules
+regardless; the on-demand layer carries the depth.
 
 Each tool gets the shape it actually loads. Claude Code takes the skill whole and
 reads references on demand. Cursor and Copilot get per-topic files with globs, so
@@ -86,7 +97,8 @@ owns the region between its own markers:
 <!-- dopod-design:end -->
 ```
 
-`--global` writes to `~/.claude/skills/`, `~/.cursor/rules/`,
+`--global` writes to `~/.claude/skills/`, `~/.cursor/rules/` (including an
+`alwaysApply: true` rule, since a home `AGENTS.md` is not read at user scope),
 `~/.copilot/instructions/`, and `~/.codex/`. Windsurf and Cline have no usable
 user-level location, so they are skipped in `--global` mode and the CLI says so.
 

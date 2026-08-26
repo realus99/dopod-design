@@ -48,6 +48,15 @@ test('the build emits one output per tool for the skill and each reference', asy
   }
 });
 
+test('README names emitted files by their real prefix', async () => {
+  // It documented `carbon-*.mdc` and `carbon-*.instructions.md` from v0.1.0
+  // until #32 — a leftover from the rename that nothing caught, because prose
+  // is not built and never fails.
+  const readme = await fs.readFile(path.join(PACKAGE_ROOT, 'README.md'), 'utf8');
+  assert.doesNotMatch(readme, /`?carbon-\*/,
+    'README names emitted files as carbon-*; they are dopod-design-*');
+});
+
 test('README lists every reference, and its stated count is right', async () => {
   // The README said "ten reference files" while listing twelve, and omitted
   // ibm-products entirely. Prose counts drift the moment a reference is added
@@ -136,6 +145,40 @@ test('components.md has no dangling pointer to a missing reference', async () =>
     assert.ok(REFERENCES.some((r) => r.file === m[1]),
       `components.md points at references/${m[1]}, which is not a registered reference`);
   }
+});
+
+test('every tool gets an artefact its host loads unconditionally', async () => {
+  // Cursor shipped for four versions with no always-on layer, because nothing
+  // asserted one (#32). The mechanism differs per tool, so each is named here
+  // rather than inferred — if a host changes how it decides, this is where the
+  // claim is recorded.
+  const ALWAYS_ON = {
+    'claude-code': 'AGENTS.md',
+    codex: 'AGENTS.md',
+    cursor: 'AGENTS.md',
+    copilot: '.github/copilot-instructions.md',
+    windsurf: 'rules/dopod-design.md',
+    gemini: 'GEMINI.md',
+    cline: '10-dopod-design.md',
+  };
+  const { distDir } = await buildIntoTmp();
+  const { ALL_TOOLS } = require('../lib/paths.js');
+  for (const tool of ALL_TOOLS) {
+    const rel = ALWAYS_ON[tool];
+    assert.ok(rel, `${tool} has no declared always-on artefact`);
+    const body = await fs.readFile(path.join(distDir, tool, rel), 'utf8');
+    assert.match(body, /Carbon rules that matter most/,
+      `${tool}'s always-on file does not carry the slim rules`);
+  }
+
+  // Windsurf's is the one that needs an explicit marker in the file itself.
+  const ws = await fs.readFile(path.join(distDir, 'windsurf/rules/dopod-design.md'), 'utf8');
+  assert.match(ws, /^---\ntrigger: always_on\n---/);
+
+  // Cursor's user-scope variant needs alwaysApply, since ~/.cursor/rules only
+  // takes .mdc and one without frontmatter is "Apply Manually".
+  const cu = await fs.readFile(path.join(distDir, 'cursor/user/dopod-design-always.mdc'), 'utf8');
+  assert.match(cu, /^---\nalwaysApply: true\n---/);
 });
 
 test('windsurf rules respect the 12,000-character cap', async () => {

@@ -3,6 +3,36 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Cursor had no always-on layer.** Its slim rule shipped
+  `alwaysApply: false` with a `description`, which is Cursor's *Apply
+  Intelligently* — the agent picks the rule from its description. That is
+  exactly the failure the always-on layer exists to prevent: 6 of 40 trigger
+  queries fail under every description we could write, all sharing one shape.
+  On those prompts a Cursor user got nothing.
+
+  Every other tool had a deliberate mechanism; Cursor's `alwaysApply: false`
+  was applied uniformly to every emitted `.mdc` and predated the always-on
+  work. Cursor now reads `AGENTS.md`, so it joins Claude Code and Codex on the
+  file they already share — installing all three still writes one merged block.
+
+  At user scope Cursor reads `~/.cursor/rules/`, not a home `AGENTS.md`, so the
+  same body also ships as an `alwaysApply: true` rule there. A `.mdc` without
+  frontmatter is *Apply Manually*, which would have been worse than shipping
+  nothing.
+
+  A test now asserts all seven tools have an always-on artefact carrying the
+  slim rules, and names each host's mechanism — the gap existed because nothing
+  checked.
+
+- **README's per-tool table was three versions stale.** It named emitted files
+  as `carbon-*` (a leftover from the rename), and omitted Windsurf, Gemini and
+  Cline entirely despite their landing in 0.4.0. Rewritten as always-on versus
+  on-demand per tool, with a test for the filename prefix.
+
 ## [1.3.1] — 2026-08-25
 
 ### Fixed
